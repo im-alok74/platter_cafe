@@ -1,26 +1,158 @@
 @import "tailwindcss";
+@import "./fx.css";
 
+/* Design tokens. Everything else uses these. */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #fbf6ef;
+  --surface: #ffffff;
+  --foreground: #231f1c;
+  --muted: #6b5f55;
+  --border: #e6dccf;
+  --brand: #b3202a;
+  --brand-foreground: #ffffff;
+  --taupe: #9c8a76;
+  --espresso: #2a1d17;
+  --gold: #c9a25b;
+  --gold-text: #8a6420; /* gold for small text on cream: 4.9:1 */
+  --sand: #f1e6d6;
+  --info: #1f6f99; /* chair blue, darkened for AA on cream */
+  --veg: #1a7f37;
+  --nonveg: #b3202a;
+
+  --radius-card: 16px;
+  --radius-sheet: 28px;
+  --shadow-card: 0 1px 2px rgb(35 31 28 / 0.06), 0 8px 24px rgb(35 31 28 / 0.07);
+
+  --dur-fast: 150ms;
+  --dur-base: 240ms;
+  --dur-slow: 450ms;
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --background: #1b1816;
+    --surface: #26221f;
+    --foreground: #f4ece3;
+    --muted: #b3a597;
+    --border: #3a3430;
+    --sand: #221e1b;
+    --gold-text: #c9a25b;
+    --brand: #e0525c;
+    --brand-foreground: #1b1816;
+    --info: #5fb4dc;
+    --veg: #4cc26e;
+    --nonveg: #e0525c;
+    --shadow-card: 0 1px 2px rgb(0 0 0 / 0.4), 0 8px 24px rgb(0 0 0 / 0.35);
+  }
+}
+
+:root[data-theme="dark"] {
+  --sand: #221e1b;
+  --gold-text: #c9a25b;
+  --background: #1b1816;
+  --surface: #26221f;
+  --foreground: #f4ece3;
+  --muted: #b3a597;
+  --border: #3a3430;
+  --brand: #e0525c;
+  --brand-foreground: #1b1816;
+  --info: #5fb4dc;
+  --veg: #4cc26e;
+  --nonveg: #e0525c;
+  --shadow-card: 0 1px 2px rgb(0 0 0 / 0.4), 0 8px 24px rgb(0 0 0 / 0.35);
 }
 
 @theme inline {
   --color-background: var(--background);
+  --color-surface: var(--surface);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+  --color-muted: var(--muted);
+  --color-border: var(--border);
+  --color-brand: var(--brand);
+  --color-brand-foreground: var(--brand-foreground);
+  --color-taupe: var(--taupe);
+  --color-espresso: var(--espresso);
+  --color-gold: var(--gold);
+  --color-gold-text: var(--gold-text);
+  --color-sand: var(--sand);
+  --color-info: var(--info);
+  --color-veg: var(--veg);
+  --color-nonveg: var(--nonveg);
+  --font-sans: var(--font-inter);
+  --font-display: var(--font-fraunces);
+  --font-script: var(--font-allura);
+  --radius-card: var(--radius-card);
+  --radius-sheet: var(--radius-sheet);
+  --shadow-card: var(--shadow-card);
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-inter), system-ui, sans-serif;
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+:focus-visible {
+  outline: 2px solid var(--brand);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 1ms !important;
+    transition-duration: 1ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+@keyframes page-enter {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: none; }
+}
+.page-enter { animation: page-enter var(--dur-base) var(--ease-out) both; }
+
+@keyframes marquee {
+  to { transform: translateX(-50%); }
+}
+.marquee-track { animation: marquee 60s linear infinite; }
+.marquee:hover .marquee-track { animation-play-state: paused; }
+@media (prefers-reduced-motion: reduce) {
+  .marquee-track { animation: none; }
+}
+
+/* Kitchen: a new order slides in and flashes once so it cannot be missed. No other motion on that screen. */
+@keyframes kitchen-new {
+  from { transform: translateY(-14px); background-color: color-mix(in srgb, var(--brand) 28%, var(--surface)); }
+  to { transform: none; background-color: var(--surface); }
+}
+.kitchen-new { animation: kitchen-new 700ms var(--ease-out) both; }
+
+/* Big serif headings sit tighter, like a printed menu. */
+@layer components {
+  .display { font-family: var(--font-fraunces), serif; letter-spacing: -0.02em; line-height: 1.05; }
+}
+
+/* Scrolling ticker on the home page. Stops for people who prefer reduced motion. */
+@keyframes marquee { to { transform: translateX(-50%); } }
+.marquee { animation: marquee 38s linear infinite; }
+@media (prefers-reduced-motion: reduce) { .marquee { animation: none; } }
+
+/* The kitchen screen is always dark: easier on the eyes at the pass and the tickets stand out. */
+.kitchen-theme {
+  --background: #171210;
+  --surface: #26201d;
+  --foreground: #f4ece3;
+  --muted: #b3a597;
+  --border: #3a3430;
+  --brand: #e0525c;
+  --brand-foreground: #1b1816;
+  --info: #5fb4dc;
+  --veg: #4cc26e;
+  --nonveg: #e0525c;
+  background: var(--background);
+  color: var(--foreground);
 }

@@ -39,3 +39,12 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+dev.log
+.gstack/
+
+!.env.example
+
+# local tooling and logs
+/.claude/
+/.gstack/
+dev.log
