@@ -21,6 +21,12 @@ async function benchByCode(code: string) {
 // The shape check runs before the cache, so random junk in the address never creates cache entries.
 const getBench = (code: string) => (/^[\w-]{4,40}$/.test(code) ? benchByCode(code) : Promise.resolve(null));
 
+// A bad or retired QR code should not be titled like a working table.
+export async function generateMetadata({ params }: { params: Promise<{ code: string }> }) {
+  const bench = await getBench((await params).code);
+  return { title: bench ? `Order at ${bench.label}` : "Table not found" };
+}
+
 function Skeleton() {
   return (
     <div className="flex-1" aria-busy="true" aria-label="Loading menu">
@@ -56,6 +62,7 @@ async function Table({ params }: { params: Promise<{ code: string }> }) {
       gstPercent={settings.tax.gst_percent}
       whatsapp={settings.contact.whatsapp}
       delivery={settings.delivery}
+      hours={settings.hours}
       customer={me ? { id: me.id, name: me.name ?? "", phone: me.phone ? me.phone.replace(/^\+?91/, "") : "" } : null}
       favouriteIds={favourites}
     />

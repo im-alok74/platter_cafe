@@ -50,6 +50,17 @@ const subscribe = (cb: () => void) => {
   listeners.add(cb);
   return () => listeners.delete(cb);
 };
+
+// Another tab changed the cart: re-read it so both tabs show the same order.
+if (typeof window !== "undefined") {
+  window.addEventListener("storage", (e) => {
+    if (e.key !== STORAGE && e.key !== null) return;
+    loaded = false;
+    state = EMPTY;
+    load();
+    listeners.forEach((l) => l());
+  });
+}
 const snapshot = () => {
   load();
   return state;

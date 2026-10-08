@@ -1,5 +1,5 @@
 "use client";
-import { useActionState, useState } from "react";
+import { startTransition, useActionState, useState } from "react";
 import { btn, card, input } from "@/components/admin/ui";
 import { deliveryFee, type DeliveryRules } from "@/lib/delivery";
 import { formatPrice } from "@/lib/format";
@@ -17,7 +17,7 @@ export function DeliveryForm({ rules, enabled }: { rules: DeliveryRules; enabled
     </label>
   );
   return (
-    <form action={action} className="space-y-5">
+    <form onSubmit={(e) => { e.preventDefault(); const fd = new FormData(e.currentTarget); startTransition(() => action(fd)); }} className="space-y-5">
       <label className={`${card} flex min-h-11 items-center gap-3 font-medium`}>
         <input type="checkbox" name="enabled" defaultChecked={enabled} className="h-5 w-5 accent-[var(--brand)]" />
         Offer delivery to customers

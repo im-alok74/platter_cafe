@@ -1,13 +1,13 @@
 import Image from "next/image";
 import Link from "next/link";
 import { Suspense } from "react";
-import { Beans, Cup, SpinBadge, SplitText, Wave } from "@/components/fx/fx";
+import { Beans, CoffeeHero, SpinBadge, SplitText, Wave } from "@/components/fx/fx";
 import { CountUp, Magnetic } from "@/components/fx/fx-client";
 import { ArrowIcon, BagIcon, QrIcon, ScooterIcon } from "@/components/icons";
 import { Reveal } from "@/components/motion";
 import { OpenBadge } from "@/components/open-badge";
 import { getMenu } from "@/lib/data/menu";
-import { getGallery, getHero, getSettings } from "@/lib/data/site";
+import { getGallery, getSettings } from "@/lib/data/site";
 import { formatPrice } from "@/lib/format";
 import { Announcement, Catering, Faq, OffersTeaser, Picks, Visit, primary, wrap } from "./home-sections";
 
@@ -15,7 +15,7 @@ const ghostLight = "inline-flex min-h-12 items-center justify-center gap-2 round
 const GRAIN = "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.5'/%3E%3C/svg%3E\")";
 
 async function HeroX() {
-  const [s, hero] = await Promise.all([getSettings(), getHero()]);
+  const s = await getSettings();
   return (
     <>
       <Announcement open={s.hours.open} close={s.hours.close} />
@@ -40,14 +40,7 @@ async function HeroX() {
             <div className="mt-7"><OpenBadge hours={s.hours} /></div>
           </div>
           <div className="relative mx-auto w-full max-w-[24rem]">
-            {hero ? (
-              <div className="relative aspect-[4/5] w-full overflow-hidden rounded-t-[999px] rounded-b-[2.5rem] border-4 border-gold/50 bg-sand shadow-[0_30px_80px_-20px_rgba(0,0,0,0.7)]">
-                <Image src={hero.url} alt={hero.alt} fill priority sizes="(min-width: 768px) 24rem, 80vw" placeholder="blur" blurDataURL={hero.blur} className="object-cover" />
-                <div aria-hidden className="absolute inset-0 bg-gradient-to-t from-black/45 via-transparent to-transparent" />
-              </div>
-            ) : (
-              <Cup className="mx-auto aspect-[6/5] w-full max-w-[26rem]" />
-            )}
+            <CoffeeHero className="aspect-[4/5] w-full rounded-t-[999px] rounded-b-[2.5rem] border-4 border-gold/50 bg-sand shadow-[0_30px_80px_-20px_rgba(0,0,0,0.7)]" />
             <SpinBadge id="badge-hero" text={s.flags.delivery ? "OPEN DAILY • DINE IN • TAKEAWAY • DELIVERY • " : "OPEN DAILY • DINE IN • TAKEAWAY • OPEN DAILY • "} className="absolute -bottom-6 -left-4 h-28 w-28 rounded-full bg-espresso text-gold shadow-xl md:-left-8 md:h-32 md:w-32">
               <Link href="/menu" aria-label="See the menu" className="flex h-12 w-12 items-center justify-center rounded-full bg-brand text-brand-foreground transition hover:scale-110 md:h-14 md:w-14"><ArrowIcon width={22} height={22} /></Link>
             </SpinBadge>

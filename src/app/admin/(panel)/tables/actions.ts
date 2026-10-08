@@ -16,10 +16,14 @@ export async function addTable(label: string) {
   const staff = await assertStaff();
   const db = await createClient();
   const name = z.string().trim().min(1).max(40).parse(label);
-  const { data } = await db.from("benches").select("number").order("number", { ascending: false }).limit(1);
-  const { error } = await db.from("benches").insert({ cafe_id: staff.cafeId, number: (data?.[0]?.number ?? 0) + 1, label: name, code: newCode() });
-  if (error) throw new Error("Could not add the table.");
-  done();
+  // Next number is max + 1; if two staff add a table at once, one hits the unique (cafe_id, number) and tries again.
+  for (let attempt = 0; attempt < 3; attempt++) {
+    const { data } = await db.from("benches").select("number").eq("cafe_id", staff.cafeId).order("number", { ascending: false }).limit(1);
+    const { error } = await db.from("benches").insert({ cafe_id: staff.cafeId, number: (data?.[0]?.number ?? 0) + 1, label: name, code: newCode() });
+    if (!error) return done();
+    if (error.code !== "23505") break;
+  }
+  throw new Error("Could not add the table.");
 }
 
 export async function renameTable(id: string, label: string) {

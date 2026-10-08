@@ -21,6 +21,7 @@ async function Gate() {
           {staff.role === "kitchen" && (
             <Link href="/admin" className="inline-flex min-h-11 items-center rounded-full border border-white/25 bg-white/10 px-4 text-sm font-medium text-[#fbf6ef]">Dashboard</Link>
           )}
+          <Link href="/" prefetch={false} className="inline-flex min-h-11 items-center rounded-full border border-white/25 bg-white/10 px-4 text-sm font-medium text-[#fbf6ef]">Website</Link>
           <form action={signOut}>
             <button className="inline-flex min-h-11 items-center rounded-full border border-white/25 bg-white/10 px-4 text-sm font-medium text-[#fbf6ef]">Sign out</button>
           </form>

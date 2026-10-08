@@ -3,6 +3,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import { getCustomer } from "@/lib/customer";
+import { TOO_MANY, authAllowed } from "@/lib/rate-limit";
 import { createClient } from "@/lib/supabase/server";
 
 export type FormState = { error?: string; ok?: boolean };
@@ -29,6 +30,7 @@ export async function changePassword(_: FormState, form: FormData): Promise<Form
   const db = await createClient();
   const { data } = await db.auth.getUser();
   if (!data.user?.email) return { error: "Please sign in again." };
+  if (!(await authAllowed(data.user.email))) return { error: TOO_MANY };
   const check = await db.auth.signInWithPassword({ email: data.user.email, password: current });
   if (check.error) return { error: "Your current password is wrong." };
   const { error } = await db.auth.updateUser({ password: next });

@@ -64,7 +64,7 @@ export default async function OrdersPage({ searchParams }: { searchParams: Promi
     <>
       <div className="flex flex-wrap items-end justify-between gap-3">
         <h1 className="display text-4xl md:text-5xl">Orders</h1>
-        <a href={`/admin/orders/export?range=${range}`} className="inline-flex min-h-10 items-center rounded-full border border-border bg-surface px-4 text-sm font-semibold">Download CSV</a>
+        <a href={href({}).replace("/admin/orders", "/admin/orders/export")} className="inline-flex min-h-10 items-center rounded-full border border-border bg-surface px-4 text-sm font-semibold">Download CSV</a>
       </div>
 
       <form action="/admin/orders" className="mt-3 flex flex-wrap gap-2">

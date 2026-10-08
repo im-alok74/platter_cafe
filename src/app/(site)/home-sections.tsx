@@ -1,12 +1,12 @@
 import Image from "next/image";
 import Link from "next/link";
-import { Suspense } from "react";
+import { CoffeeHero } from "@/components/fx/fx";
 import { HomePicks } from "@/components/home-picks";
 import { ArrowIcon, BagIcon, ClockIcon, PhoneIcon, PinIcon, QrIcon, ScooterIcon } from "@/components/icons";
 import { Reveal } from "@/components/motion";
 import { OpenBadge } from "@/components/open-badge";
 import { getMenu } from "@/lib/data/menu";
-import { getGallery, getHero, getOffers, getSettings } from "@/lib/data/site";
+import { getGallery, getOffers, getSettings } from "@/lib/data/site";
 import { formatPrice, telHref, waHref } from "@/lib/format";
 import { formatTime } from "@/lib/hours";
 
@@ -26,7 +26,7 @@ export function Announcement({ open, close }: { open: string; close: string }) {
 }
 
 export async function Hero() {
-  const [s, hero, gallery, menu] = await Promise.all([getSettings(), getHero(), getGallery(), getMenu()]);
+  const [s, gallery, menu] = await Promise.all([getSettings(), getGallery(), getMenu()]);
   const dishes = menu.reduce((n, c) => n + c.items.length, 0);
   const room = gallery[1] ?? gallery[0];
   return (
@@ -52,9 +52,7 @@ export async function Hero() {
         </div>
 
         <div className="grid grid-cols-[1.15fr_1fr] gap-3">
-          <div className="relative row-span-2 aspect-[3/4] overflow-hidden rounded-[28px] bg-sand">
-            {hero && <Image src={hero.url} alt={hero.alt} fill priority sizes="(min-width: 1024px) 28vw, 52vw" placeholder="blur" blurDataURL={hero.blur} className="object-cover" />}
-          </div>
+          <CoffeeHero className="row-span-2 aspect-[3/4] rounded-[28px] bg-sand" />
           <div className="relative aspect-square overflow-hidden rounded-[28px] bg-sand">
             {room && <Image src={room.url} alt="Inside Platter" fill sizes="(min-width: 1024px) 24vw, 40vw" placeholder="blur" blurDataURL={room.blur} className="object-cover" />}
           </div>

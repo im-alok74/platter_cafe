@@ -1,7 +1,7 @@
 "use client";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useActionState, useState } from "react";
+import { startTransition, useActionState, useState } from "react";
 import { ImageUploader } from "@/components/admin/image-uploader";
 import { btn, card, input } from "@/components/admin/ui";
 import { BADGES } from "@/lib/menu-constants";
@@ -27,11 +27,14 @@ export function ItemForm({ item, categories, addons }: { item: ItemData; categor
   const router = useRouter();
   const [state, action, saving] = useActionState<FormState, FormData>(saveItem, {});
   const [variants, setVariants] = useState(item.variants);
+  const [deleting, setDeleting] = useState(false);
+  const [delError, setDelError] = useState("");
   const label = "block text-sm font-medium";
 
   return (
     <div className="space-y-5">
-      <form action={action} className="space-y-5">
+      {/* Submitting through a transition (not form action) so React does not reset the fields after an error. */}
+      <form onSubmit={(e) => { e.preventDefault(); const fd = new FormData(e.currentTarget); startTransition(() => action(fd)); }} className="space-y-5">
         {item.id && <input type="hidden" name="id" value={item.id} />}
         <input type="hidden" name="variants" value={JSON.stringify(variants)} />
 
@@ -124,16 +127,26 @@ export function ItemForm({ item, categories, addons }: { item: ItemData; categor
               }}
             />
           </section>
+          {delError && <p role="alert" className="text-sm text-nonveg">{delError}</p>}
           <button
             type="button"
+            disabled={deleting}
             className={`${btn.danger} w-full`}
             onClick={async () => {
               if (!confirm(`Delete "${item.name}" for good? To just hide it, use Hidden on the menu list.`)) return;
-              await deleteItem(item.id!);
-              router.push("/admin/menu");
+              setDeleting(true);
+              setDelError("");
+              try {
+                const res = (await deleteItem(item.id!)) as { error?: string } | void;
+                if (res?.error) throw new Error(res.error);
+                router.push("/admin/menu");
+              } catch (e) {
+                setDelError(e instanceof Error && e.message ? e.message : "Could not delete the item. Try again.");
+                setDeleting(false);
+              }
             }}
           >
-            Delete item
+            {deleting ? "Deleting…" : "Delete item"}
           </button>
         </>
       ) : (

@@ -32,6 +32,16 @@ SQL lives in `supabase/migrations` (applied in order) and `supabase/seed.sql` (m
 
 Each table's QR code is the random `code` column on `benches`, used as `/t/<code>`.
 
+**First owner (one time).** There is no staff sign-up. After the migrations and seed, open Supabase, SQL editor, and run this once with your own email and a strong password (8 to 72 characters). Do not save the password in the repo.
+
+```sql
+insert into public.staff_roles (user_id, cafe_id, role)
+select public._make_user('owner@example.com', 'choose-a-strong-password', '{}'::jsonb), id, 'owner'
+from public.cafes where slug = 'platter';
+```
+
+Sign in at `/admin/login`, then add managers and kitchen staff from the Staff page. Clear the SQL editor tab afterwards so the password is not left in its history.
+
 Backups: enable daily backups in Supabase (Pro plan), and restore from Dashboard, Database, Backups. A restore note will be expanded in the Phase 9 runbook.
 
 ## Architecture: fewest database requests

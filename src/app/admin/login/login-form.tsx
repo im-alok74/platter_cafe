@@ -1,13 +1,16 @@
 "use client";
-import { useActionState, useState } from "react";
+import { useSearchParams } from "next/navigation";
+import { startTransition, useActionState, useState } from "react";
 import { btn, input } from "@/components/admin/ui";
 import { signIn, type LoginState } from "./actions";
 
 export function LoginForm() {
   const [state, action, pending] = useActionState<LoginState, FormData>(signIn, {});
   const [show, setShow] = useState(false);
+  const next = useSearchParams().get("next");
   return (
-    <form action={action} className="space-y-4">
+    <form onSubmit={(e) => { e.preventDefault(); const fd = new FormData(e.currentTarget); startTransition(() => action(fd)); }} className="space-y-4">
+      {next && <input type="hidden" name="next" value={next} />}
       <label className="block text-sm font-medium">
         Email
         <input name="email" type="email" autoComplete="username" required autoFocus className={`${input} mt-1`} />

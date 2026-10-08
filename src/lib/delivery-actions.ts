@@ -2,6 +2,7 @@
 import { z } from "zod";
 import { deliveryFee, haversineKm } from "@/lib/delivery";
 import { getSettings } from "@/lib/data/site";
+import { TOO_MANY, clientIp, rateLimit } from "@/lib/rate-limit";
 
 export type Quote = { ok: true; km: number; fee: number; lat: number; lng: number; label: string; tooFar: boolean } | { ok: false; error: string };
 
@@ -13,8 +14,22 @@ const input = z.object({
   subtotal: z.number().min(0).max(100000),
 });
 
+// Recent lookups, so the same address typed again does not hit Nominatim (max 1 request a second). Oldest dropped first.
+const geoCache = new Map<string, { lat: number; lng: number; label: string }>();
+
 /** Free map data: OpenStreetMap to find the address, and the OSRM road router for the distance. */
 async function geocode(address: string) {
+  const key = address.toLowerCase().replace(/\s+/g, " ");
+  const cached = geoCache.get(key);
+  if (cached) return cached;
+  const hit = await lookup(address);
+  if (!hit) return null; // not cached: a miss may be Nominatim throttling us
+  if (geoCache.size >= 500) geoCache.delete(geoCache.keys().next().value!);
+  geoCache.set(key, hit);
+  return hit;
+}
+
+async function lookup(address: string) {
   const q = /jaipur/i.test(address) ? address : `${address}, Jaipur`;
   const url = `https://nominatim.openstreetmap.org/search?format=json&limit=1&countrycodes=in&viewbox=75.55,27.15,76.05,26.65&q=${encodeURIComponent(q)}`;
   const res = await fetch(url, { headers: UA, signal: AbortSignal.timeout(6000) });
@@ -48,6 +63,7 @@ async function roadKm(from: { lat: number; lng: number }, to: { lat: number; lng
 export async function quoteDelivery(raw: z.input<typeof input>): Promise<Quote> {
   const p = input.safeParse(raw);
   if (!p.success) return { ok: false, error: "Please check the address." };
+  if (!rateLimit(`quote:${await clientIp()}`, 20, 10 * 60_000)) return { ok: false, error: TOO_MANY };
   const { delivery } = await getSettings();
   let spot = p.data.lat !== undefined && p.data.lng !== undefined ? { lat: p.data.lat, lng: p.data.lng, label: p.data.address ?? "" } : null;
   if (!spot) {

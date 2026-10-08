@@ -10,7 +10,7 @@ export async function saveTemplate(_: FormState, form: FormData): Promise<FormSt
   const staff = await assertStaff();
   const name = form.get("name");
   if (name !== "minimal" && name !== "expressive") return { error: "Pick one of the two looks." };
-  const { error } = await (await createClient()).from("settings").update({ value: { name } }).eq("cafe_id", staff.cafeId).eq("key", "template");
+  const { error } = await (await createClient()).from("settings").upsert({ cafe_id: staff.cafeId, key: "template", value: { name } }, { onConflict: "cafe_id,key" });
   if (error) return { error: "Could not save. Please try again." };
   updateTag("settings");
   return { ok: true };

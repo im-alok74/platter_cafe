@@ -10,6 +10,7 @@ import type { DeliveryRules } from "@/lib/delivery";
 import { useOrdering } from "@/lib/use-ordering";
 import type { MenuCategory, MenuItem } from "@/lib/data/menu";
 import { formatPrice } from "@/lib/format";
+import { formatTime, isOpenNow, type Hours } from "@/lib/hours";
 import { createClient } from "@/lib/supabase/browser";
 import { spring } from "@/lib/motion/tokens";
 import { CartDrawer } from "./cart-drawer";
@@ -27,15 +28,23 @@ const lastOrderSnapshot = () => {
 
 const useLastOrder = () => useSyncExternalStore(() => () => {}, lastOrderSnapshot, () => null);
 
+// Open or closed by the cafe's clock, rechecked every minute. Assumed open on the server; the place-order action checks again.
+const everyMinute = (cb: () => void) => {
+  const id = setInterval(cb, 60_000);
+  return () => clearInterval(id);
+};
+const useOpen = (hours: Hours) => useSyncExternalStore(everyMinute, () => isOpenNow(hours), () => true);
+
 type Customer = { id: string; name: string; phone: string };
 
-export function OrderApp({ code, tableLabel, categories, gstPercent, whatsapp, delivery, customer, favouriteIds }: { code: string; tableLabel: string; categories: MenuCategory[]; gstPercent: number; whatsapp: string; delivery: DeliveryRules; customer: Customer | null; favouriteIds: string[] }) {
+export function OrderApp({ code, tableLabel, categories, gstPercent, whatsapp, delivery, hours, customer, favouriteIds }: { code: string; tableLabel: string; categories: MenuCategory[]; gstPercent: number; whatsapp: string; delivery: DeliveryRules; hours: Hours; customer: Customer | null; favouriteIds: string[] }) {
   const { count, subtotal } = useCart();
   const [sheet, setSheet] = useState<MenuItem | null>(null);
   const [drawer, setDrawer] = useState(false);
   const [help, setHelp] = useState(false);
   const [toast, setToast] = useState("");
   const lastOrder = useLastOrder();
+  const closed = useOpen(hours) ? null : `Closed now — opens at ${formatTime(hours.open)}`;
   const [favs, setFavs] = useState(() => new Set(favouriteIds));
 
   // Remember the table for this visit, so "Order again" and the account pages can send the guest back here.
@@ -101,6 +110,12 @@ export function OrderApp({ code, tableLabel, categories, gstPercent, whatsapp, d
         </div>
       </header>
 
+      {closed && (
+        <p role="status" className="mx-auto mt-3 flex min-h-11 max-w-3xl items-center justify-center rounded-2xl bg-nonveg/10 px-4 text-center text-sm font-medium text-nonveg" style={{ width: "calc(100% - 2rem)" }}>
+          {closed}. You can browse the menu, but ordering is paused.
+        </p>
+      )}
+
       {lastOrder && (
         <Link href={`/order/${lastOrder}`} className="mx-auto mt-3 flex min-h-11 max-w-3xl items-center justify-between rounded-2xl bg-info/10 px-4 text-sm font-medium text-info" style={{ width: "calc(100% - 2rem)" }}>
           Track your order <span aria-hidden>→</span>
@@ -111,7 +126,7 @@ export function OrderApp({ code, tableLabel, categories, gstPercent, whatsapp, d
       <MenuBrowser categories={shownCategories} ordering={ordering} summary={`Ordering for ${tableLabel}`} />
 
       <AnimatePresence>{sheet && <ItemSheet key={sheet.id} item={sheet} onClose={() => setSheet(null)} onAdded={() => setSheet(null)} favourite={customer ? { on: favs.has(sheet.id), toggle: () => toggleFav(sheet) } : undefined} />}</AnimatePresence>
-      <AnimatePresence>{drawer && <CartDrawer code={code} tableLabel={tableLabel} gstPercent={gstPercent} whatsapp={whatsapp} delivery={delivery} deliveryEnabled={false} prefill={customer ? { name: customer.name, phone: customer.phone } : null} onClose={() => setDrawer(false)} />}</AnimatePresence>
+      <AnimatePresence>{drawer && <CartDrawer code={code} tableLabel={tableLabel} gstPercent={gstPercent} whatsapp={whatsapp} delivery={delivery} deliveryEnabled={false} prefill={customer ? { name: customer.name, phone: customer.phone } : null} closed={closed} onClose={() => setDrawer(false)} />}</AnimatePresence>
 
       <AnimatePresence>
         {count > 0 && !drawer && !sheet && (

@@ -72,24 +72,3 @@ export async function getPosts(): Promise<Post[]> {
   if (error) throw error;
   return data as Post[];
 }
-
-export type Hero = { url: string; width: number; height: number; blur: string; alt: string };
-
-/** The home page photo, set by the owner as the "home_hero" banner. */
-export async function getHero(): Promise<Hero | null> {
-  "use cache";
-  cacheTag("banners");
-  cacheLife("hours");
-  const { data, error } = await createPublicClient()
-    .from("banners")
-    .select("title,image:media_assets!banners_image_id_fkey(url,width,height)")
-    .eq("placement", "home_hero")
-    .eq("hidden", false)
-    .order("sort")
-    .limit(1)
-    .maybeSingle();
-  if (error) throw error;
-  const img = data?.image as unknown as { url: string; width: number | null; height: number | null } | null;
-  if (!img) return null;
-  return { url: img.url, width: img.width ?? 3840, height: img.height ?? 2880, blur: await blurDataUrl(img.url), alt: data?.title ?? "Platter" };
-}

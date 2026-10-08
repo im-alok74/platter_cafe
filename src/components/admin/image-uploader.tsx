@@ -3,6 +3,7 @@ import dynamic from "next/dynamic";
 import Image from "next/image";
 import { useRef, useState, type ComponentType } from "react";
 import type { Area, CropperProps } from "react-easy-crop";
+import { useFocusTrap } from "@/lib/use-focus-trap";
 import { btn } from "./ui";
 
 // next/dynamic drops the library's default props from the types, so every prop is made optional here.
@@ -84,6 +85,7 @@ export function ImageUploader({ kind, aspect, current, onUploaded, onRemove }: {
   const [error, setError] = useState("");
   const pick = useRef<HTMLInputElement>(null);
   const camera = useRef<HTMLInputElement>(null);
+  const dialog = useRef<HTMLDivElement>(null);
 
   function open(url: string) {
     setZoom(1);
@@ -98,6 +100,8 @@ export function ImageUploader({ kind, aspect, current, onUploaded, onRemove }: {
     if (src?.startsWith("blob:")) URL.revokeObjectURL(src);
     setSrc(null);
   }
+
+  useFocusTrap(dialog, !!src, () => !busy && close());
 
   function choose(file?: File) {
     setError("");
@@ -172,7 +176,7 @@ export function ImageUploader({ kind, aspect, current, onUploaded, onRemove }: {
       {error && !src && <p role="alert" className="mt-2 text-sm text-nonveg">{error}</p>}
 
       {src && (
-        <div role="dialog" aria-modal="true" aria-label="Edit photo" className="fixed inset-0 z-50 flex flex-col bg-black">
+        <div ref={dialog} role="dialog" aria-modal="true" aria-label="Edit photo" className="fixed inset-0 z-50 flex flex-col bg-black">
           <div className="relative min-h-0 flex-1">
             <Cropper image={src} crop={crop} zoom={zoom} aspect={shape} onCropChange={setCrop} onZoomChange={setZoom} onCropComplete={(_, px) => setArea(px)} style={{ mediaStyle: { filter: cssFilter(tone) } }} />
           </div>

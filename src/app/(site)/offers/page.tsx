@@ -3,6 +3,7 @@ import Link from "next/link";
 import { Suspense } from "react";
 import { PageHeader } from "@/components/page-header";
 import { ArrowIcon, PhoneIcon, QrIcon } from "@/components/icons";
+import { getCustomer } from "@/lib/customer";
 import { getOffers, getSettings } from "@/lib/data/site";
 import { formatPrice, telHref } from "@/lib/format";
 
@@ -39,7 +40,7 @@ async function List() {
 }
 
 async function MoreWays() {
-  const s = await getSettings();
+  const [s, me] = await Promise.all([getSettings(), getCustomer()]);
   const ways = [
     { Icon: QrIcon, title: "Ask at your table", text: "Staff know about every running deal. Mention it when you order, or ask what is on today." },
     { Icon: PhoneIcon, title: "Groups & parties", text: "Booking for a crowd? Call us for catering and group menus, customised to your need.", href: telHref(s.contact.phone), cta: `Call ${s.contact.phone.replace("+91", "+91 ")}` },
@@ -60,13 +61,15 @@ async function MoreWays() {
           </li>
         ))}
       </ul>
+      {!me && (
       <div className="mt-6 flex flex-col items-start justify-between gap-3 rounded-3xl bg-espresso p-6 text-white md:flex-row md:items-center">
         <div>
-          <p className="display text-2xl">Rewards for regulars are on the way</p>
-          <p className="mt-1 text-sm text-white/70">Points on every order and a referral bonus are being added. Sign in with your phone number so your orders count from today.</p>
+          <p className="display text-2xl">Coming back often?</p>
+          <p className="mt-1 text-sm text-white/70">Sign in with your phone number to keep your orders and favourites in one place.</p>
         </div>
         <Link href="/login?next=/account" className="inline-flex min-h-11 shrink-0 items-center rounded-full bg-brand px-6 text-sm font-semibold text-brand-foreground">Sign in</Link>
       </div>
+      )}
     </section>
   );
 }

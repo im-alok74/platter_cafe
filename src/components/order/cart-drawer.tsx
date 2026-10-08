@@ -42,9 +42,11 @@ function loadGuest(): Guest {
 
 const KIND_LABEL: Record<Kind, string> = { dine_in: "Dine in", takeaway: "Takeaway", delivery: "Delivery" };
 
-export function CartDrawer({ code, tableLabel, gstPercent, whatsapp, delivery, deliveryEnabled, prefill, onClose }: {
+export function CartDrawer({ code, tableLabel, onNotAtTable, gstPercent, whatsapp, delivery, deliveryEnabled, prefill, closed = null, onClose }: {
   code: string | null; tableLabel: string | null; gstPercent: number; whatsapp: string;
-  delivery: DeliveryRules; deliveryEnabled: boolean; prefill: Guest | null; onClose: () => void;
+  /** Website only: forget the remembered table so the guest can pick takeaway or delivery. */
+  onNotAtTable?: () => void;
+  delivery: DeliveryRules; deliveryEnabled: boolean; prefill: Guest | null; closed?: string | null; onClose: () => void;
 }) {
   const router = useRouter();
   const { lines, note, subtotal, count } = useCart();
@@ -65,7 +67,7 @@ export function CartDrawer({ code, tableLabel, gstPercent, whatsapp, delivery, d
   const total = subtotal + tax + fee;
   const belowMin = kind === "delivery" && delivery.min_order > subtotal;
   const field = "mt-1 min-h-11 w-full rounded-xl border border-border bg-surface px-3 text-base outline-none focus:border-brand";
-  const stepper = "flex h-10 w-10 items-center justify-center rounded-full border border-border bg-surface text-lg transition active:scale-90";
+  const stepper = "flex h-11 w-11 items-center justify-center rounded-full border border-border bg-surface text-lg transition active:scale-90";
 
   async function check(from?: { lat: number; lng: number }) {
     setQuoteError("");
@@ -172,7 +174,14 @@ export function CartDrawer({ code, tableLabel, gstPercent, whatsapp, delivery, d
             <fieldset className="mt-5">
               <legend className="mb-2 text-sm font-medium">How would you like it?</legend>
               {code ? (
-                <p className="flex min-h-12 items-center justify-center rounded-xl border border-espresso bg-espresso px-3 text-center text-sm font-semibold text-[#fbf6ef]">Dine in · {tableLabel}</p>
+                <>
+                  <p className="flex min-h-12 items-center justify-center rounded-xl border border-espresso bg-espresso px-3 text-center text-sm font-semibold text-[#fbf6ef]">Dine in · {tableLabel}</p>
+                  {onNotAtTable && (
+                    <button type="button" onClick={() => { setKind("takeaway"); setError(""); onNotAtTable(); }} className="mt-1 flex min-h-11 w-full items-center justify-center text-sm font-medium text-brand underline-offset-4 hover:underline">
+                      Not at the table? Order takeaway{deliveryEnabled ? " or delivery" : ""}
+                    </button>
+                  )}
+                </>
               ) : (
                 <div className={`grid gap-2 ${kinds.length === 3 ? "grid-cols-3" : "grid-cols-2"}`}>
                   {kinds.map((k) => (
@@ -238,7 +247,8 @@ export function CartDrawer({ code, tableLabel, gstPercent, whatsapp, delivery, d
       {lines.length > 0 && (
         <div className="border-t border-border p-4 pb-[max(1rem,env(safe-area-inset-bottom))]">
           {error && <p role="alert" className="mb-2 text-sm text-nonveg">{error}</p>}
-          <button onClick={submit} disabled={pending} className="min-h-12 w-full rounded-full bg-brand text-base font-semibold text-brand-foreground transition active:scale-95 disabled:opacity-60">
+          {closed && <p role="status" className="mb-2 text-center text-sm font-medium text-nonveg">{closed}</p>}
+          <button onClick={submit} disabled={pending || Boolean(closed)} className="min-h-12 w-full rounded-full bg-brand text-base font-semibold text-brand-foreground transition active:scale-95 disabled:opacity-60">
             {pending ? "Placing your order…" : `Place order · ${count} ${count === 1 ? "item" : "items"} · ${formatPrice(total)}`}
           </button>
           <a href={whatsappLink(whatsapp, lines, total, where, guest.name)} target="_blank" rel="noopener noreferrer" className="mt-2 flex min-h-11 items-center justify-center text-sm font-medium text-muted underline">

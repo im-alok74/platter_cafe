@@ -2,6 +2,7 @@
 import { redirect } from "next/navigation";
 import { safeNext } from "@/lib/customer";
 import { loginEmail } from "@/lib/identifier";
+import { TOO_MANY, authAllowed, clientIp, rateLimit } from "@/lib/rate-limit";
 import { createClient } from "@/lib/supabase/server";
 
 export type AuthState = { error?: string };
@@ -18,6 +19,7 @@ export async function signIn(_: AuthState, form: FormData): Promise<AuthState> {
   const email = loginEmail(String(form.get("identifier") ?? ""));
   const password = String(form.get("password") ?? "");
   if (!email || !password) return { error: "Enter your mobile number or email, and your password." };
+  if (!(await authAllowed(email))) return { error: TOO_MANY };
   const db = await createClient();
   const { error } = await db.auth.signInWithPassword({ email, password });
   if (error) return { error: "Wrong mobile number, email or password." };
@@ -34,6 +36,7 @@ export async function register(_: AuthState, form: FormData): Promise<AuthState>
   if (!email) return { error: REGISTER_ERRORS.invalid_identifier };
   if (password.length < 8) return { error: REGISTER_ERRORS.weak_password };
   if (password !== String(form.get("confirm") ?? "")) return { error: "The two passwords do not match." };
+  if (!rateLimit(`register:${await clientIp()}`, 5, 15 * 60_000)) return { error: TOO_MANY };
   const db = await createClient();
   const { error } = await db.rpc("register_customer", { p_identifier: identifier, p_password: password, p_name: String(form.get("name") ?? "") });
   if (error) return { error: REGISTER_ERRORS[error.message] ?? "Could not create the account. Please try again." };

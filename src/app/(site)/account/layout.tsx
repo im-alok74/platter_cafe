@@ -1,3 +1,4 @@
+import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { Suspense, type ReactNode } from "react";
 import { AdminNav } from "@/components/admin/admin-nav";
@@ -8,7 +9,11 @@ export const instant = false;
 export const metadata = { title: { default: "Your account", template: "%s | Your account" }, robots: { index: false, follow: false } };
 
 async function Gate({ children }: { children: ReactNode }) {
-  if (!(await getCustomer())) redirect("/login?next=/account");
+  if (!(await getCustomer())) {
+    // Come back to the exact account page after signing in. The proxy sets x-pathname.
+    const path = (await headers()).get("x-pathname") ?? "/account";
+    redirect(`/login?next=${encodeURIComponent(path.startsWith("/account") ? path : "/account")}`);
+  }
   return (
     <>
       <AdminNav

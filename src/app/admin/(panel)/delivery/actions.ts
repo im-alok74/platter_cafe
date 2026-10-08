@@ -29,11 +29,16 @@ export async function saveDelivery(_: FormState, form: FormData): Promise<FormSt
   if (!p.success) return { error: "Check the numbers: they must be zero or more." };
   const { enabled, ...r } = p.data;
   const db = await createClient();
-  const { data: current } = await db.from("settings").select("key,value").in("key", ["delivery", "flags"]);
+  const { data: current } = await db.from("settings").select("key,value").eq("cafe_id", staff.cafeId).in("key", ["delivery", "flags"]);
   const get = (k: string) => (current?.find((c) => c.key === k)?.value ?? {}) as Record<string, unknown>;
-  const a = await db.from("settings").update({ value: { ...get("delivery"), ...r } }).eq("cafe_id", staff.cafeId).eq("key", "delivery");
-  const b = await db.from("settings").update({ value: { ...get("flags"), delivery: enabled } }).eq("cafe_id", staff.cafeId).eq("key", "flags");
-  if (a.error || b.error) return { error: "Could not save. Please try again." };
+  const { error } = await db.from("settings").upsert(
+    [
+      { cafe_id: staff.cafeId, key: "delivery", value: { ...get("delivery"), ...r } },
+      { cafe_id: staff.cafeId, key: "flags", value: { ...get("flags"), delivery: enabled } },
+    ],
+    { onConflict: "cafe_id,key" },
+  );
+  if (error) return { error: "Could not save. Please try again." };
   updateTag("settings");
   return { ok: true };
 }

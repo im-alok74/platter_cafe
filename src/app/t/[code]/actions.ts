@@ -2,6 +2,8 @@
 import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
 import { createPublicClient } from "@/lib/supabase/admin";
+import { toE164 } from "@/lib/phone";
+import { clientIp, rateLimit } from "@/lib/rate-limit";
 
 export type PlaceResult = { ok: true; id: string } | { ok: false; error: string };
 
@@ -35,13 +37,16 @@ const friendly = (e: { code?: string; message: string }) => (e.code === "P0001" 
 export async function placeOrder(raw: z.input<typeof input>): Promise<PlaceResult> {
   const p = input.safeParse(raw);
   if (!p.success) return { ok: false, error: "Something in your order looks wrong. Please check it and try again." };
+  const phone = p.data.phone && toE164(p.data.phone);
+  if (phone === null) return { ok: false, error: "Enter a valid 10-digit mobile number." };
+  if (!rateLimit(`order:${await clientIp()}`, 10, 10 * 60_000)) return { ok: false, error: "Too many orders from here. Please wait a few minutes or ask the staff." };
   // Uses the visitor's own session (if signed in), so a database trigger can link the order to their account.
   const { data, error } = await (await createClient()).rpc("place_order", {
     p_bench_code: p.data.code ?? "",
     p_order_type: p.data.orderType,
     p_payment_method: "counter",
     p_name: p.data.name,
-    p_phone: p.data.phone,
+    p_phone: phone,
     p_note: p.data.note,
     p_key: p.data.key,
     p_lines: p.data.lines,

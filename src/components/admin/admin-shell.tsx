@@ -1,7 +1,7 @@
 "use client";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import type { ComponentType, ReactNode, SVGProps } from "react";
+import { useEffect, useRef, type ComponentType, type ReactNode, type SVGProps } from "react";
 import { BagIcon, FlameIcon, GridIcon, KeyIcon, ListIcon, LogoutIcon, PaletteIcon, PlusCircleIcon, QrIcon, ReceiptIcon, ScooterIcon, TagIcon, UsersIcon, UtensilsIcon } from "@/components/icons";
 import { Wordmark } from "@/components/wordmark";
 
@@ -17,6 +17,11 @@ export function AdminShell({ email, role, groups, signOut, children }: { email: 
   const flat = groups.flatMap((g) => g.links);
   // "/admin" matches only itself; every other link also matches its sub-pages.
   const active = (href: string) => (href === "/admin" ? path === href : path === href || path.startsWith(href + "/"));
+  const pills = useRef<HTMLElement>(null);
+  // Keep the current page's pill in view on phones, where the row scrolls sideways.
+  useEffect(() => {
+    pills.current?.querySelector<HTMLElement>('[aria-current="page"]')?.scrollIntoView({ inline: "center", block: "nearest" });
+  }, [path]);
 
   return (
     <div className="lg:flex">
@@ -27,7 +32,7 @@ export function AdminShell({ email, role, groups, signOut, children }: { email: 
         <nav aria-label="Admin" className="min-h-0 flex-1 overflow-y-auto px-3 pb-4">
           {groups.map((g) => (
             <div key={g.title} className="mt-5">
-              <p className="px-3 text-[10px] font-semibold uppercase tracking-[0.18em] text-[#8a7a6c]">{g.title}</p>
+              <p className="px-3 text-[10px] font-semibold uppercase tracking-[0.18em] text-[#b5a596]">{g.title}</p>
               <ul className="mt-1.5 space-y-0.5">
                 {g.links.map((l) => {
                   const Icon = ICONS[l.icon];
@@ -48,6 +53,10 @@ export function AdminShell({ email, role, groups, signOut, children }: { email: 
         <div className="border-t border-white/10 p-4">
           <p className="truncate text-sm font-medium">{email}</p>
           <p className="mb-3 text-xs text-gold">{roleLabel[role] ?? role}</p>
+          <div className="mb-2 grid grid-cols-2 gap-2">
+            <Link href="/" prefetch={false} className="flex min-h-10 items-center justify-center rounded-xl bg-white/5 text-sm font-medium text-[#d9cbbd] transition hover:bg-white/10">View website</Link>
+            <a href="/menu" target="_blank" rel="noopener" className="flex min-h-10 items-center justify-center rounded-xl bg-white/5 text-sm font-medium text-[#d9cbbd] transition hover:bg-white/10">View menu</a>
+          </div>
           <form action={signOut}>
             <button className="flex min-h-10 w-full items-center justify-center gap-2 rounded-xl border border-white/20 text-sm font-medium transition hover:bg-white/5 active:scale-95">
               <LogoutIcon width={18} height={18} /> Sign out
@@ -67,7 +76,11 @@ export function AdminShell({ email, role, groups, signOut, children }: { email: 
               </form>
             </div>
           </div>
-          <nav aria-label="Admin" className="flex gap-2 overflow-x-auto px-4 pb-3 [scrollbar-width:none]">
+          <div className="flex gap-4 px-4 pb-2 text-xs font-medium text-[#d9cbbd]">
+            <Link href="/" prefetch={false} className="inline-flex min-h-11 items-center underline-offset-4 hover:underline">View website</Link>
+            <a href="/menu" target="_blank" rel="noopener" className="inline-flex min-h-11 items-center underline-offset-4 hover:underline">View menu ↗</a>
+          </div>
+          <nav ref={pills} aria-label="Admin" className="flex gap-2 overflow-x-auto px-4 pb-3 [scrollbar-width:none]">
             {flat.map((l) => (
               <Link key={l.href} href={l.href} prefetch={false} aria-current={active(l.href) ? "page" : undefined} className={`inline-flex min-h-10 shrink-0 items-center rounded-full px-4 text-sm font-medium transition active:scale-95 ${active(l.href) ? "bg-gold text-espresso" : "bg-white/10 text-[#e8dccf]"}`}>
                 {l.label}

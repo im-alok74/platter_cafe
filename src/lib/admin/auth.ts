@@ -1,5 +1,6 @@
 import "server-only";
 import { cache } from "react";
+import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 
@@ -21,7 +22,11 @@ export const getStaff = cache(async (): Promise<Staff | null> => {
 /** For pages: send anyone without the right role to the login or dashboard. */
 export async function requireStaff(roles: Role[] = ["owner", "manager"]) {
   const staff = await getStaff();
-  if (!staff) redirect("/admin/login");
+  if (!staff) {
+    // The proxy sets x-pathname, so staff land back on the page they asked for after signing in.
+    const path = (await headers()).get("x-pathname");
+    redirect(path ? `/admin/login?next=${encodeURIComponent(path)}` : "/admin/login");
+  }
   if (!roles.includes(staff.role)) redirect("/admin?denied=1");
   return staff;
 }

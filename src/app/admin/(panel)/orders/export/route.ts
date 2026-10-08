@@ -25,8 +25,14 @@ export async function GET(request: Request) {
   } catch {
     return new Response("Not allowed", { status: 403 });
   }
-  const key = new URL(request.url).searchParams.get("range") ?? "today";
-  const [from, to] = RANGES[key] ?? RANGES.today;
+  const sp = new URL(request.url).searchParams;
+  const raw = sp.get("range") ?? "";
+  const key = Object.hasOwn(RANGES, raw) ? raw : "today";
+  const [from, to] = RANGES[key];
+  // Same filters as the orders page, so the file matches what is on screen.
+  const status = sp.get("status");
+  const type = sp.get("type");
+  const search = (sp.get("q") ?? "").trim().slice(0, 40).replace(/[,()*%\\"]/g, "");
   const db = await createClient();
   let q = db
     .from("orders")
@@ -35,6 +41,14 @@ export async function GET(request: Request) {
     .order("placed_at", { ascending: false })
     .limit(5000);
   if (to !== null) q = q.lt("placed_at", istDayStart(to));
+  if (type === "dine_in" || type === "takeaway" || type === "delivery") q = q.eq("order_type", type);
+  if (status === "open") q = q.in("status", ["received", "preparing", "ready"]);
+  else if (status === "served" || status === "cancelled") q = q.eq("status", status);
+  if (search) {
+    const digits = search.replace(/\D/g, "");
+    if (/^[\d\s+#-]+$/.test(search) && digits) q = q.or(digits.length <= 6 ? `order_no.eq.${digits},guest_phone.ilike.%${digits}%` : `guest_phone.ilike.%${digits}%`);
+    else q = q.or(`guest_name.ilike.%${search}%,table_hint.ilike.%${search}%`);
+  }
   const { data, error } = await q;
   if (error) return new Response("Could not load the orders", { status: 500 });
 

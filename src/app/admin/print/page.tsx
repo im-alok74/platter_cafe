@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
 import QRCode from "qrcode";
@@ -16,7 +17,10 @@ async function Sheet() {
   return (
     <>
       <div className="flex items-center justify-between p-4 print:hidden">
-        <p className="text-sm">{tables.length} QR cards, 6 per A4 page. Print at 100% scale.</p>
+        <div>
+          <Link href="/admin/tables" className="inline-flex min-h-11 items-center text-sm font-medium underline-offset-4 hover:underline">← Back to tables</Link>
+          <p className="text-sm">{tables.length} QR cards, 6 per A4 page. Print at 100% scale.</p>
+        </div>
         <PrintButton />
       </div>
       <ul className="grid grid-cols-2 gap-4 p-4 print:gap-0 print:p-0">

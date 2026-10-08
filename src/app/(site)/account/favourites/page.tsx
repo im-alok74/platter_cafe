@@ -24,7 +24,7 @@ export default async function FavouritesPage() {
       {items.length === 0 ? (
         <div className="py-16 text-center">
           <p className="font-display text-xl">No favourites yet</p>
-          <p className="mt-1 text-muted">Tap the heart on a dish when you order, and it will be here.</p>
+          <p className="mt-1 text-muted">Tap the heart on a dish while ordering at your table, and it will be here.</p>
           <Link href="/menu" className={`${btn.primary} mt-4`}>See the menu</Link>
         </div>
       ) : (

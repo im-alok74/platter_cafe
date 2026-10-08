@@ -65,11 +65,9 @@ export async function saveItem(_: FormState, form: FormData): Promise<FormState>
     if (error) return { error: "Could not save the item." };
     itemId = data.id;
   }
-  // Variants are replaced as a set. ponytail: not atomic; wrap in an RPC if a half-saved variant list ever matters.
-  await db.from("item_variants").delete().eq("item_id", itemId!);
-  if (vs.length) await db.from("item_variants").insert(vs.map((v, i) => ({ ...v, item_id: itemId!, cafe_id: staff.cafeId, sort: i })));
-  await db.from("item_addons").delete().eq("item_id", itemId!);
-  if (addons.length) await db.from("item_addons").insert(addons.map((addon_id) => ({ item_id: itemId!, addon_id })));
+  // Sizes and add-ons are replaced as one set in one transaction (migration 0022).
+  const { error: optionsError } = await db.rpc("save_item_options", { p_item: itemId!, p_variants: vs, p_addons: addons });
+  if (optionsError) return { error: "Saved the item, but not its sizes and options. Please try again." };
   published();
   if (!id) redirect(`/admin/menu/${itemId}`);
   return { ok: true };

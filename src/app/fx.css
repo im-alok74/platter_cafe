@@ -82,10 +82,22 @@
 @keyframes pop-in { from { transform: scale(0.4); opacity: 0; } to { transform: none; opacity: 1; } }
 .pop-in { animation: pop-in 0.5s cubic-bezier(0.2, 1.4, 0.3, 1) both; }
 
+/* ---------- Hero coffee photo ---------- */
+.coffee-float { animation: coffee-float 6s ease-in-out infinite; }
+@keyframes coffee-float { 50% { transform: translateY(-12px) rotate(-1.2deg); } }
+.coffee-zoom { animation: coffee-zoom 16s ease-in-out infinite alternate; }
+@keyframes coffee-zoom { from { transform: scale(1.04); } to { transform: scale(1.14) translate(-1.5%, 1.5%); } }
+.coffee-glow { background: radial-gradient(closest-side, rgb(201 162 91 / 0.45), transparent); animation: coffee-glow 4s ease-in-out infinite; z-index: -1; }
+@keyframes coffee-glow { 50% { opacity: 0.45; transform: scale(0.92); } }
+.coffee-shine { background: linear-gradient(115deg, transparent 35%, rgb(255 255 255 / 0.22) 50%, transparent 65%) 0 0 / 250% 100% no-repeat; animation: coffee-shine 7s ease-in-out infinite; mix-blend-mode: soft-light; }
+@keyframes coffee-shine { 0%, 60% { background-position: 150% 0; } 100% { background-position: -100% 0; } }
+
 @media (prefers-reduced-motion: reduce) {
+  .coffee-float, .coffee-zoom, .coffee-glow, .coffee-shine,
   .split .ch, .steam path, .heart, .cup-bob, .bean, .spin, .marquee, .scan::after, .wave-x, .bell-ring, .bump, .pop-in, .scroll-bar { animation: none !important; }
   .split .ch { transform: none; }
   .heart { stroke-dashoffset: 0; }
   .steam path { opacity: 0.5; }
   .stack > li { position: static; }
+  .tilt:hover { transform: none !important; }
 }

@@ -1,5 +1,5 @@
 "use client";
-import { useActionState } from "react";
+import { startTransition, useActionState } from "react";
 import { btn, card, input } from "@/components/admin/ui";
 import { changePassword, deleteAccount, signOutCustomer, updateProfile, type FormState } from "./actions";
 
@@ -9,7 +9,7 @@ export function ProfileForm({ name, contact, marketing }: { name: string; contac
   const [del, delAction, deleting] = useActionState<FormState, FormData>(deleteAccount, {});
   return (
     <div className="space-y-6">
-      <form action={action} className={`${card} space-y-4`}>
+      <form onSubmit={(e) => { e.preventDefault(); const fd = new FormData(e.currentTarget); startTransition(() => action(fd)); }} className={`${card} space-y-4`}>
         <label className="block text-sm font-medium">Your name<input name="name" defaultValue={name} maxLength={60} autoComplete="name" className={`${input} mt-1`} placeholder="So we can greet you" /></label>
         <div className="text-sm"><span className="font-medium">{contact.includes("@") ? "Email" : "Mobile number"}</span><p className="mt-1 text-muted">{contact}</p></div>
         <label className="flex min-h-11 items-start gap-3 text-sm">
@@ -36,7 +36,7 @@ export function ProfileForm({ name, contact, marketing }: { name: string; contac
       <details className={card}>
         <summary className="min-h-11 cursor-pointer font-medium leading-[2.75rem] text-nonveg">Delete my account</summary>
         <form action={delAction} className="mt-3 space-y-3">
-          <p className="text-sm text-muted">This removes your profile, favourites and rewards for good. Past orders stay in the cafe&apos;s records without your name or number. This cannot be undone.</p>
+          <p className="text-sm text-muted">This removes your profile and favourites for good. Past orders stay in the cafe&apos;s records without your name or number. This cannot be undone.</p>
           <label className="block text-sm font-medium">Type DELETE to confirm<input name="confirm" autoComplete="off" className={`${input} mt-1`} /></label>
           {del.error && <p role="alert" className="text-sm text-nonveg">{del.error}</p>}
           <button disabled={deleting} className={btn.danger}>{deleting ? "Deleting…" : "Delete my account"}</button>

@@ -1,5 +1,6 @@
 "use server";
 import { assertStaff } from "@/lib/admin/auth";
+import { TOO_MANY, authAllowed } from "@/lib/rate-limit";
 import { createClient } from "@/lib/supabase/server";
 
 export type FormState = { error?: string; ok?: boolean };
@@ -10,6 +11,7 @@ export async function changeMyPassword(_: FormState, form: FormData): Promise<Fo
   const next = String(form.get("next") ?? "");
   if (next.length < 8 || next.length > 72) return { error: "Use a new password of at least 8 characters." };
   if (next !== String(form.get("confirm") ?? "")) return { error: "The two new passwords do not match." };
+  if (!(await authAllowed(staff.email))) return { error: TOO_MANY };
   const db = await createClient();
   const check = await db.auth.signInWithPassword({ email: staff.email, password: String(form.get("current") ?? "") });
   if (check.error) return { error: "Your current password is wrong." };

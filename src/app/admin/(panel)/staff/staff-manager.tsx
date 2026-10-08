@@ -1,5 +1,5 @@
 "use client";
-import { useActionState, useState, useTransition } from "react";
+import { startTransition, useActionState, useEffect, useRef, useState, useTransition } from "react";
 import { btn, card, input } from "@/components/admin/ui";
 import { addStaff, changeRole, removeStaff, resetPassword, type FormState } from "./actions";
 
@@ -14,6 +14,11 @@ export function StaffManager({ members, me }: { members: { email: string; role: 
   const [error, setError] = useState("");
   const [note, setNote] = useState("");
   const [pending, start] = useTransition();
+  const addForm = useRef<HTMLFormElement>(null);
+  // Submitted from onSubmit so an error keeps what was typed; clear the form only once the account exists.
+  useEffect(() => {
+    if (state.ok) addForm.current?.reset();
+  }, [state]);
 
   function run(job: () => Promise<void>, done = "") {
     setError("");
@@ -30,7 +35,7 @@ export function StaffManager({ members, me }: { members: { email: string; role: 
 
   return (
     <div className="space-y-5">
-      <form action={action} className={`${card} space-y-3`}>
+      <form ref={addForm} onSubmit={(e) => { e.preventDefault(); const fd = new FormData(e.currentTarget); startTransition(() => action(fd)); }} className={`${card} space-y-3`}>
         <h2 className="display text-xl">Add a staff account</h2>
         <input name="email" type="email" required placeholder="name@example.com" aria-label="Email" autoComplete="off" className={input} />
         <input name="password" type="text" required minLength={8} maxLength={72} placeholder="First password (at least 8 characters)" aria-label="First password" autoComplete="off" className={input} />

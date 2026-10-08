@@ -3,6 +3,7 @@ import { m, useDragControls } from "motion/react";
 import { useEffect, useRef, useState } from "react";
 import { cart } from "@/lib/cart";
 import { formatPrice } from "@/lib/format";
+import { useFocusTrap } from "@/lib/use-focus-trap";
 import type { MenuItem } from "@/lib/data/menu";
 import { duration, spring } from "@/lib/motion/tokens";
 
@@ -11,17 +12,15 @@ export function SheetFrame({ label, onClose, children }: { label: string; onClos
   const controls = useDragControls();
   const panel = useRef<HTMLDivElement>(null);
 
+  useFocusTrap(panel, true, onClose);
+
   useEffect(() => {
-    panel.current?.focus();
-    const onKey = (e: KeyboardEvent) => e.key === "Escape" && onClose();
-    document.addEventListener("keydown", onKey);
     const prev = document.body.style.overflow;
     document.body.style.overflow = "hidden";
     return () => {
-      document.removeEventListener("keydown", onKey);
       document.body.style.overflow = prev;
     };
-  }, [onClose]);
+  }, []);
 
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center">

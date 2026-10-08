@@ -34,7 +34,7 @@ export async function SiteFooter() {
   const { contact, hours, legal } = await getSettings();
   const link = "inline-flex min-h-11 items-center text-white/70 transition hover:text-white";
   return (
-    <footer className="mt-20 bg-espresso pb-28 text-white lg:pb-10">
+    <footer className="mt-20 bg-espresso pb-40 text-white lg:pb-28">
       <div className="mx-auto grid max-w-6xl gap-10 px-4 py-14 md:grid-cols-[1.4fr_1fr_1fr_1.2fr]">
         <div>
           <Wordmark className="text-5xl !text-white" />
@@ -45,7 +45,7 @@ export async function SiteFooter() {
         <nav aria-label="Explore" className="text-sm">
           <h2 className="mb-2 text-xs font-semibold uppercase tracking-[0.18em] text-gold">Explore</h2>
           <ul>
-            {[["/menu", "Menu"], ["/offers", "Offers"], ["/gallery", "Gallery"], ["/about", "About"], ["/blog", "Blog"], ["/contact", "Contact"]].map(([h, l]) => (
+            {[["/menu", "Menu"], ["/offers", "Offers"], ["/gallery", "Gallery"], ["/about", "About"], ["/contact", "Contact"]].map(([h, l]) => (
               <li key={h}><Link className={link} href={h}>{l}</Link></li>
             ))}
           </ul>

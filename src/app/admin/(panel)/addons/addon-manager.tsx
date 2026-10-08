@@ -22,7 +22,7 @@ function Fields({ a }: { a?: AdminAddon }) {
 export function AddonManager({ initial }: { initial: AdminAddon[] }) {
   const router = useRouter();
   const [msg, setMsg] = useState<FormState>({});
-  const [, start] = useTransition();
+  const [saving, start] = useTransition();
   const addForm = useRef<HTMLFormElement>(null);
 
   const submit = (form: HTMLFormElement) =>
@@ -41,7 +41,7 @@ export function AddonManager({ initial }: { initial: AdminAddon[] }) {
         <summary className="min-h-11 cursor-pointer font-medium leading-[2.75rem]">Add an extra</summary>
         <form ref={addForm} className="mt-3 space-y-3" onSubmit={(e) => { e.preventDefault(); submit(e.currentTarget); }}>
           <Fields />
-          <button className={btn.primary}>Add extra</button>
+          <button disabled={saving} className={btn.primary}>{saving ? "Saving…" : "Add extra"}</button>
         </form>
       </details>
       <p role="status" aria-live="polite" className={`min-h-5 text-sm ${msg.error ? "text-nonveg" : "text-veg"}`}>{msg.error ?? (msg.ok ? "Saved." : "")}</p>
@@ -57,9 +57,10 @@ export function AddonManager({ initial }: { initial: AdminAddon[] }) {
               <form className="mt-3 space-y-3 border-t border-border pt-3" onSubmit={(e) => { e.preventDefault(); submit(e.currentTarget); }}>
                 <Fields a={a} />
                 <div className="flex gap-3">
-                  <button className={`${btn.primary} flex-1`}>Save</button>
+                  <button disabled={saving} className={`${btn.primary} flex-1`}>{saving ? "Saving…" : "Save"}</button>
                   <button
                     type="button"
+                    disabled={saving}
                     className={btn.danger}
                     onClick={() => {
                       if (!confirm(`Delete "${a.name}"? It will be removed from every item.`)) return;

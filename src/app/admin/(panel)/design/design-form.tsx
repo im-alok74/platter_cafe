@@ -1,4 +1,5 @@
 "use client";
+import Link from "next/link";
 import { useActionState, useState } from "react";
 import { btn } from "@/components/admin/ui";
 import type { TemplateName } from "@/lib/data/site";
@@ -39,7 +40,7 @@ export function DesignForm({ current }: { current: TemplateName }) {
       <fieldset className="grid gap-4 md:grid-cols-2">
         <legend className="sr-only">Website look</legend>
         {options.map((o) => (
-          <label key={o.name} className={`cursor-pointer rounded-3xl border-2 bg-surface p-4 shadow-card transition ${pick === o.name ? "border-brand" : "border-border"}`}>
+          <label key={o.name} className={`cursor-pointer rounded-3xl border-2 bg-surface p-4 shadow-card transition has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-brand has-[:focus-visible]:ring-offset-2 has-[:focus-visible]:ring-offset-background ${pick === o.name ? "border-brand" : "border-border"}`}>
             <input type="radio" name="name" value={o.name} checked={pick === o.name} onChange={() => setPick(o.name)} className="sr-only" />
             <Preview name={o.name} />
             <span className="mt-4 flex items-center justify-between">
@@ -54,7 +55,7 @@ export function DesignForm({ current }: { current: TemplateName }) {
         ))}
       </fieldset>
       {state.error && <p role="alert" className="text-sm text-nonveg">{state.error}</p>}
-      {state.ok && <p role="status" className="text-sm text-veg">Saved. Open the website to see it.</p>}
+      {state.ok && <p role="status" className="text-sm text-veg">Saved. <Link href="/" target="_blank" className="underline">Open the website</Link> to see it.</p>}
       <button disabled={saving || pick === current} className={btn.primary}>{saving ? "Saving…" : pick === current ? "This look is live" : `Switch to ${pick}`}</button>
     </form>
   );

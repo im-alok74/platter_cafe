@@ -11,8 +11,11 @@ with c as (
     ('contact', '{"phone":"+919829044442","whatsapp":"919829044442","email":"mshamama@hotmail.com","address":"Platter 9 (Lower Ground Floor), Rajasthan International Centre (RIC), Sansthan Path, JLN Marg, Jhalana Doongri, Jaipur, Rajasthan 302017","maps_url":"https://maps.app.goo.gl/yQWZKutQKqLdydDy7","instagram":"https://www.instagram.com/platter_cafe"}'),
     ('legal', '{"entity":"Kehwa","tagline":"A unit of Kehwa","fssai":"12223026002434","fssai_valid_to":"2026-12-30","gst_number":"08AARFK0670K1ZW"}'),
     ('flags', '{"delivery":false,"referrals":false,"popups":false,"loyalty":false,"blog":false}'),
-    ('delivery', '{"areas":[],"charge":0,"free_above":0}')
+    ('delivery', '{"base_fare":30,"base_km":2,"per_km":10,"max_km":8,"free_above":0,"min_order":0,"lat":26.8668664,"lng":75.8190989}'),
+    ('ops', '{"prep_base_minutes":10,"per_order_minutes":2,"max_orders_per_bench_10min":6,"max_orders_cafe_10min":120,"enforce_hours":true}'),
+    ('template', '{"name":"expressive"}')
   ) as v(key, value)
+  on conflict (cafe_id, key) do update set value = excluded.value
 ), b as (
   insert into public.benches (cafe_id, number, label)
   select c.id, n, 'Table ' || n from c, generate_series(1, 16) n

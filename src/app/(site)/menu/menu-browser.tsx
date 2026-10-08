@@ -100,7 +100,7 @@ function MenuCard({ item, ordering }: { item: MenuItem; ordering?: Ordering }) {
         {item.variants.length > 0 && (
           <div role="group" aria-label={`Options for ${item.name}`} className="mb-2 flex flex-wrap gap-1.5">
             {item.variants.map((v) => (
-              <button key={v.id} type="button" aria-pressed={variantId === v.id} onClick={() => setVariantId(v.id)} className={`min-h-8 rounded-md border px-2.5 text-xs font-medium transition active:scale-95 ${variantId === v.id ? "border-brand bg-brand/10 text-brand" : "border-border text-muted"}`}>
+              <button key={v.id} type="button" aria-pressed={variantId === v.id} onClick={() => setVariantId(v.id)} className={`min-h-11 rounded-md border px-2.5 text-xs font-medium transition active:scale-95 ${variantId === v.id ? "border-brand bg-brand/10 text-brand" : "border-border text-muted"}`}>
                 {v.name}
               </button>
             ))}
@@ -111,12 +111,12 @@ function MenuCard({ item, ordering }: { item: MenuItem; ordering?: Ordering }) {
           {ordering && !item.sold_out && (
             line ? (
               <span role="group" aria-label={`Quantity of ${item.name}`} className="flex items-center overflow-hidden rounded-lg border border-brand bg-brand/10">
-                <button type="button" aria-label="One less" className="flex h-10 w-9 items-center justify-center text-lg font-semibold text-brand active:bg-brand/20" onClick={() => ordering.onQty(line.key, line.qty - 1)}>−</button>
+                <button type="button" aria-label="One less" className="flex h-11 w-11 items-center justify-center text-lg font-semibold text-brand active:bg-brand/20" onClick={() => ordering.onQty(line.key, line.qty - 1)}>−</button>
                 <m.span key={line.qty} initial={{ scale: 1.3 }} animate={{ scale: 1 }} className="w-6 text-center text-sm font-bold tabular-nums" aria-live="polite">{line.qty}</m.span>
-                <button type="button" aria-label="One more" disabled={line.qty >= 20} className="flex h-10 w-9 items-center justify-center text-lg font-semibold text-brand active:bg-brand/20" onClick={() => ordering.onQty(line.key, line.qty + 1)}>+</button>
+                <button type="button" aria-label="One more" disabled={line.qty >= 20} className="flex h-11 w-11 items-center justify-center text-lg font-semibold text-brand active:bg-brand/20" onClick={() => ordering.onQty(line.key, line.qty + 1)}>+</button>
               </span>
             ) : (
-              <button type="button" onClick={() => (item.addons.length > 0 ? ordering.onOpen(item) : ordering.onAdd(item, variantId))} className="min-h-10 rounded-lg bg-brand px-4 text-sm font-bold tracking-wide text-brand-foreground transition active:scale-95">
+              <button type="button" onClick={() => (item.addons.length > 0 ? ordering.onOpen(item) : ordering.onAdd(item, variantId))} className="min-h-11 rounded-lg bg-brand px-4 text-sm font-bold tracking-wide text-brand-foreground transition active:scale-95">
                 ADD
               </button>
             )
@@ -135,7 +135,10 @@ export function MenuBrowser({ categories, ordering, summary }: { categories: Men
 
   // Time-based visibility needs the visitor's clock: null on the server, the real time in the browser.
   const minutes = useSyncExternalStore(
-    () => () => {},
+    (cb) => {
+      const id = setInterval(cb, 60_000);
+      return () => clearInterval(id);
+    },
     () => istClock().minutes,
     () => null,
   );

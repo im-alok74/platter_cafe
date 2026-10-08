@@ -26,7 +26,7 @@ export function CategoryManager({ initial }: { initial: AdminCategory[] }) {
   const router = useRouter();
   const [list, setList] = useState(initial);
   const [msg, setMsg] = useState<FormState>({});
-  const [, start] = useTransition();
+  const [saving, start] = useTransition();
   const addForm = useRef<HTMLFormElement>(null);
 
   const submit = (form: HTMLFormElement) =>
@@ -45,7 +45,7 @@ export function CategoryManager({ initial }: { initial: AdminCategory[] }) {
         <summary className="min-h-11 cursor-pointer font-medium leading-[2.75rem]">Add a category</summary>
         <form ref={addForm} className="mt-3 space-y-3" onSubmit={(e) => { e.preventDefault(); submit(e.currentTarget); }}>
           <Fields />
-          <button className={btn.primary}>Add category</button>
+          <button disabled={saving} className={btn.primary}>{saving ? "Saving…" : "Add category"}</button>
         </form>
       </details>
       <p role="status" aria-live="polite" className={`min-h-5 text-sm ${msg.error ? "text-nonveg" : "text-veg"}`}>{msg.error ?? (msg.ok ? "Saved." : "")}</p>
@@ -77,9 +77,10 @@ export function CategoryManager({ initial }: { initial: AdminCategory[] }) {
             <form className="mt-3 space-y-3 border-t border-border pt-3" onSubmit={(e) => { e.preventDefault(); submit(e.currentTarget); }}>
               <Fields c={c} />
               <div className="flex gap-3">
-                <button className={`${btn.primary} flex-1`}>Save</button>
+                <button disabled={saving} className={`${btn.primary} flex-1`}>{saving ? "Saving…" : "Save"}</button>
                 <button
                   type="button"
+                  disabled={saving}
                   className={btn.danger}
                   onClick={() => {
                     if (!confirm(`Delete the category "${c.name}"?`)) return;

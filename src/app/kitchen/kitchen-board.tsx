@@ -5,6 +5,7 @@ import { Wordmark } from "@/components/wordmark";
 import { formatPrice } from "@/lib/format";
 import { orderTypeLabel, type OrderStatus } from "@/lib/order";
 import { createClient } from "@/lib/supabase/browser";
+import { useFocusTrap } from "@/lib/use-focus-trap";
 
 type KItem = { id: string; name: string; variant_name: string | null; qty: number; addons: { name: string }[]; note: string | null };
 type KOrder = {
@@ -59,6 +60,10 @@ export function KitchenBoard({ actions, dishes }: { actions: ReactNode; dishes: 
   const seen = useRef<Set<string> | null>(null);
   const seenReq = useRef<Set<string> | null>(null);
   const audio = useRef<AudioContext | null>(null);
+  const [busy, setBusy] = useState<Set<string>>(new Set());
+  const inflight = useRef(new Set<string>());
+  const soldDialog = useRef<HTMLDivElement>(null);
+  useFocusTrap(soldDialog, soldPanel, () => setSoldPanel(false));
 
   const beep = useCallback((double = false) => {
     const ctx = audio.current;
@@ -161,11 +166,21 @@ export function KitchenBoard({ actions, dishes }: { actions: ReactNode; dishes: 
     setSoundOn((v) => !v);
   }
 
-  async function rpc(fn: "set_order_status" | "mark_counter_paid", args: Record<string, string>) {
+  async function rpc(fn: "set_order_status" | "mark_counter_paid", args: { p_id: string } & Record<string, string>) {
+    const id = args.p_id;
+    // One action per order at a time, so a double tap cannot skip a stage.
+    if (inflight.current.has(id)) return;
+    inflight.current.add(id);
+    setBusy(new Set(inflight.current));
     setError("");
-    const { error: e } = await sb.current.rpc(fn, args);
-    if (e) setError(e.code === "P0001" ? e.message : "No connection. Try again.");
-    await load();
+    try {
+      const { error: e } = await sb.current.rpc(fn, args);
+      if (e) setError(e.code === "P0001" ? e.message : "No connection. Try again.");
+      await load();
+    } finally {
+      inflight.current.delete(id);
+      setBusy(new Set(inflight.current));
+    }
   }
 
   const all = orders ?? [];
@@ -207,6 +222,7 @@ export function KitchenBoard({ actions, dishes }: { actions: ReactNode; dishes: 
     const next = NEXT[o.status];
     const st = stage[o.status];
     const urgency = !working ? "bg-veg" : late ? "bg-nonveg" : warn ? "bg-gold" : "bg-veg";
+    const pending = busy.has(o.id);
     return (
       <li key={o.id} className={`overflow-hidden rounded-2xl border-2 bg-surface shadow-card ${fresh.has(o.id) ? "kitchen-new border-brand" : late ? "border-nonveg" : "border-border"}`}>
         <div className={`h-1.5 ${st.bar}`} />
@@ -249,15 +265,15 @@ export function KitchenBoard({ actions, dishes }: { actions: ReactNode; dishes: 
           {o.note && <p className="mt-3 rounded-lg bg-brand/15 p-2 text-lg font-medium text-brand">Note: {o.note}</p>}
           <p className="mt-3 text-sm text-muted">{formatPrice(o.total)} · {o.payment_status === "paid" ? "Paid" : o.payment_method === "counter" ? "Pays at counter" : "Online, pending"}</p>
           <div className="mt-3 grid gap-2">
-            {next && <button onClick={() => rpc("set_order_status", { p_id: o.id, p_status: next.to })} className={`${btn} ${st.btn}`}>{next.label}</button>}
+            {next && <button disabled={pending} onClick={() => rpc("set_order_status", { p_id: o.id, p_status: next.to })} className={`${btn} ${st.btn} disabled:opacity-60`}>{pending ? "Saving…" : next.label}</button>}
             {o.payment_method === "counter" && o.payment_status === "unpaid" && (
-              <button onClick={() => rpc("mark_counter_paid", { p_id: o.id })} className={`${btn} border-2 border-veg text-veg`}>Mark paid</button>
+              <button disabled={pending} onClick={() => rpc("mark_counter_paid", { p_id: o.id })} className={`${btn} border-2 border-veg text-veg disabled:opacity-60`}>Mark paid</button>
             )}
             <div className="flex gap-2 text-base">
-              {BACK[o.status] && o.status !== "served" && <button onClick={() => rpc("set_order_status", { p_id: o.id, p_status: BACK[o.status]! })} className="min-h-12 flex-1 rounded-xl border border-border">Back</button>}
+              {BACK[o.status] && o.status !== "served" && <button disabled={pending} onClick={() => rpc("set_order_status", { p_id: o.id, p_status: BACK[o.status]! })} className="min-h-12 flex-1 rounded-xl border border-border disabled:opacity-60">Back</button>}
               <button onClick={() => setPrinting(o)} className="min-h-12 flex-1 rounded-xl border border-border">Print KOT</button>
               {o.status !== "served" && o.payment_status !== "paid" && (
-                <button onClick={() => confirm(`Cancel order #${o.order_no}?`) && rpc("set_order_status", { p_id: o.id, p_status: "cancelled" })} className="min-h-12 flex-1 rounded-xl border border-nonveg text-nonveg">Cancel</button>
+                <button disabled={pending} onClick={() => confirm(`Cancel order #${o.order_no}?`) && rpc("set_order_status", { p_id: o.id, p_status: "cancelled" })} className="min-h-12 flex-1 rounded-xl border border-nonveg text-nonveg disabled:opacity-60">Cancel</button>
               )}
             </div>
           </div>
@@ -322,8 +338,13 @@ export function KitchenBoard({ actions, dishes }: { actions: ReactNode; dishes: 
                 <button
                   className="min-h-11 rounded-xl bg-info px-4 font-semibold text-background"
                   onClick={async () => {
+                    setError("");
                     setRequests((l) => l.filter((x) => x.id !== r.id));
-                    await sb.current.from("service_requests").update({ status: "done" }).eq("id", r.id);
+                    const { error: e } = await sb.current.from("service_requests").update({ status: "done" }).eq("id", r.id);
+                    if (e) {
+                      setError("Could not clear that request. Check the connection.");
+                      await load();
+                    }
                   }}
                 >
                   Done
@@ -384,7 +405,7 @@ export function KitchenBoard({ actions, dishes }: { actions: ReactNode; dishes: 
         )}
 
         {soldPanel && (
-          <div role="dialog" aria-modal="true" aria-label="Sold out dishes" className="fixed inset-0 z-50 flex items-end justify-center bg-black/70 sm:items-center">
+          <div ref={soldDialog} role="dialog" aria-modal="true" aria-label="Sold out dishes" className="fixed inset-0 z-50 flex items-end justify-center bg-black/70 sm:items-center">
             <div className="flex max-h-[85svh] w-full max-w-lg flex-col rounded-t-3xl bg-background p-5 sm:rounded-3xl">
               <div className="flex items-center justify-between gap-3">
                 <h2 className="display text-2xl">Sold out dishes</h2>

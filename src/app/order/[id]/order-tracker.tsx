@@ -115,9 +115,12 @@ export function OrderTracker({ id }: { id: string }) {
     return () => clearTimeout(t);
   }, [toast]);
 
+  const [asking, setAsking] = useState(false);
   async function ask(kind: "waiter" | "bill") {
-    if (!order?.bench_code) return;
+    if (!order?.bench_code || asking) return;
+    setAsking(true);
     const { error } = await supabase.current.rpc("request_service", { p_code: order.bench_code, p_kind: kind });
+    setAsking(false);
     setToast(error ? "Could not send that. Please wave to the staff." : kind === "waiter" ? "A waiter is on the way." : "The bill is being prepared.");
   }
 
@@ -230,15 +233,21 @@ export function OrderTracker({ id }: { id: string }) {
       {order.bench_code && !cancelled && (
         <div className="mt-6 grid grid-cols-2 gap-3">
           {order.status !== "served" ? (
-            <button onClick={() => ask("waiter")} className="min-h-12 rounded-full border border-border bg-surface text-sm font-medium transition active:scale-95">Call a waiter</button>
+            <button onClick={() => ask("waiter")} disabled={asking} className="min-h-12 rounded-full border border-border bg-surface text-sm font-medium transition active:scale-95 disabled:opacity-60">{asking ? "Sending…" : "Call a waiter"}</button>
           ) : (
             <Link href={`/t/${order.bench_code}`} className="inline-flex min-h-12 items-center justify-center rounded-full border border-border bg-surface text-sm font-medium transition active:scale-95">Order more</Link>
           )}
-          <button onClick={() => ask("bill")} className="min-h-12 rounded-full bg-brand text-sm font-semibold text-brand-foreground transition active:scale-95">Request the bill</button>
+          <button onClick={() => ask("bill")} disabled={asking} className="min-h-12 rounded-full bg-brand text-sm font-semibold text-brand-foreground transition active:scale-95 disabled:opacity-60">Request the bill</button>
         </div>
       )}
       {order.bench_code && !cancelled && order.status !== "served" && (
         <Link href={`/t/${order.bench_code}`} className="mt-3 flex min-h-11 items-center justify-center text-sm font-medium text-brand">Order something else</Link>
+      )}
+      {!order.bench_code && (
+        <div className="mt-6 grid grid-cols-2 gap-3">
+          <Link href="/menu" className="inline-flex min-h-12 items-center justify-center rounded-full bg-brand text-sm font-semibold text-brand-foreground transition active:scale-95">Back to menu</Link>
+          <Link href="/" className="inline-flex min-h-12 items-center justify-center rounded-full border border-border bg-surface text-sm font-medium transition active:scale-95">Home</Link>
+        </div>
       )}
 
       <div role="status" aria-live="polite" className="pointer-events-none fixed inset-x-0 bottom-6 z-50 flex justify-center px-4">

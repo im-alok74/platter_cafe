@@ -1,4 +1,6 @@
+import Image from "next/image";
 import type { CSSProperties } from "react";
+import coffee from "@/assets/hero-coffee.jpg";
 
 /** Headline whose letters rise out of a mask one by one. Screen readers get the plain text. */
 export function SplitText({ text, delay = 0, className = "" }: { text: string; delay?: number; className?: string }) {
@@ -29,6 +31,20 @@ export function Steam({ className = "" }: { className?: string }) {
       <path d="M30 78 C 20 60, 40 50, 30 32 S 36 8, 30 0" />
       <path d="M46 76 C 36 60, 56 50, 46 34 S 52 10, 46 2" />
     </svg>
+  );
+}
+
+/** The hero photo: a latte that floats, slowly zooms, glows and steams. All CSS, paused under reduced motion. */
+export function CoffeeHero({ className = "" }: { className?: string }) {
+  return (
+    <div className={`coffee-hero pop-in relative ${className}`}>
+      <div aria-hidden className="coffee-glow absolute -inset-6 rounded-full" />
+      <div className="coffee-float relative h-full w-full overflow-hidden rounded-[inherit]">
+        <Image src={coffee} alt="A latte with leaf art and coffee beans" fill priority placeholder="blur" sizes="(min-width: 768px) 26rem, 85vw" className="coffee-zoom object-cover" />
+        <Steam className="absolute left-1/2 top-[3%] h-[28%] -translate-x-1/2 text-white/80" />
+        <div aria-hidden className="coffee-shine absolute inset-0" />
+      </div>
+    </div>
   );
 }
 

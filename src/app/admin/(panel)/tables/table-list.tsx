@@ -10,13 +10,14 @@ export function TableList({ tables, siteUrl }: { tables: AdminTable[]; siteUrl: 
   const router = useRouter();
   const [error, setError] = useState("");
   const [newLabel, setNewLabel] = useState("");
-  const [, start] = useTransition();
+  const [saving, start] = useTransition();
 
-  const run = (fn: () => Promise<unknown>) =>
+  const run = (fn: () => Promise<unknown>, onDone?: () => void) =>
     start(async () => {
       setError("");
       try {
         await fn();
+        onDone?.();
         router.refresh();
       } catch (e) {
         setError(e instanceof Error ? e.message : "That did not save.");
@@ -25,9 +26,9 @@ export function TableList({ tables, siteUrl }: { tables: AdminTable[]; siteUrl: 
 
   return (
     <div className="space-y-4">
-      <form className="flex gap-3" onSubmit={(e) => { e.preventDefault(); const l = newLabel; setNewLabel(""); run(() => addTable(l)); }}>
+      <form className="flex gap-3" onSubmit={(e) => { e.preventDefault(); run(() => addTable(newLabel), () => setNewLabel("")); }}>
         <input value={newLabel} onChange={(e) => setNewLabel(e.target.value)} placeholder={`Table ${tables.length + 1}`} aria-label="New table name" required className={input} />
-        <button className={`${btn.primary} shrink-0`}>Add table</button>
+        <button disabled={saving} className={`${btn.primary} shrink-0`}>{saving ? "Saving…" : "Add table"}</button>
       </form>
       <a href="/admin/print" target="_blank" rel="noopener" className={`${btn.ghost} w-full`}>Print all QR codes</a>
       <p role="alert" className="min-h-5 text-sm text-nonveg">{error}</p>
@@ -46,8 +47,8 @@ export function TableList({ tables, siteUrl }: { tables: AdminTable[]; siteUrl: 
               />
               <p className="truncate px-2 text-xs text-muted">{siteUrl}/t/{t.code}</p>
               <div className="mt-2 flex flex-wrap gap-2">
-                <button role="switch" aria-checked={t.active} onClick={() => run(() => setTableActive(t.id, !t.active))} className={btn.ghost}>{t.active ? "Active" : "Disabled"}</button>
-                <button onClick={() => { if (confirm(`Make a new QR code for ${t.label}? The printed one will stop working.`)) run(() => rotateTableCode(t.id)); }} className={btn.ghost}>New QR</button>
+                <button role="switch" aria-checked={t.active} disabled={saving} onClick={() => run(() => setTableActive(t.id, !t.active))} className={btn.ghost}>{t.active ? "Active" : "Disabled"}</button>
+                <button onClick={() => { if (confirm(`Make a new QR code for ${t.label}? The printed one will stop working.`)) run(() => rotateTableCode(t.id)); }} disabled={saving} className={btn.ghost}>New QR</button>
               </div>
             </div>
           </li>

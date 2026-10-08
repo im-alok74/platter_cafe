@@ -35,7 +35,7 @@ async function Body() {
       <ul className="list-disc space-y-1 pl-5">
         <li>Change your name or marketing choice any time in your account.</li>
         <li>Delete your account and personal data yourself from your account page. Past orders stay in the cafe&apos;s records for accounting, with your name and number removed.</li>
-        <li>Ask us anything about your data: <a className="text-brand" href={`mailto:${contact.email}`}>{contact.email}</a>.</li>
+        <li>Ask us anything about your data: <a className="inline-block py-2 text-brand" href={`mailto:${contact.email}`}>{contact.email}</a>.</li>
       </ul>
 
       <h2 className={h2}>Keeping it safe</h2>

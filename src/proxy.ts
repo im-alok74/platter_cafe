@@ -3,6 +3,8 @@ import { NextResponse, type NextRequest } from "next/server";
 
 // Keeps the signed-in session fresh (staff and customers). Authorisation itself is checked on the server in each page and action.
 export async function proxy(request: NextRequest) {
+  // Lets a logged-out page redirect to the login with ?next= pointing back here.
+  request.headers.set("x-pathname", request.nextUrl.pathname + request.nextUrl.search);
   let response = NextResponse.next({ request });
   const supabase = createServerClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!, {
     cookies: {
@@ -21,4 +23,4 @@ export async function proxy(request: NextRequest) {
   return response;
 }
 
-export const config = { matcher: ["/admin/:path*", "/auth/:path*", "/account/:path*", "/t/:path*"] };
+export const config = { matcher: ["/admin/:path*", "/auth/:path*", "/account/:path*", "/t/:path*", "/kitchen/:path*", "/login"] };

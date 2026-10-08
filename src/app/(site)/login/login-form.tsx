@@ -1,6 +1,6 @@
 "use client";
 import Link from "next/link";
-import { useActionState, useState } from "react";
+import { startTransition, useActionState, useState } from "react";
 import { btn, input } from "@/components/admin/ui";
 import { register, signIn, type AuthState } from "./actions";
 
@@ -24,8 +24,19 @@ export function LoginForm({ next }: { next: string }) {
   const [mode, setMode] = useState<"signin" | "register">("signin");
   const [inState, inAction, signingIn] = useActionState<AuthState, FormData>(signIn, {});
   const [regState, regAction, registering] = useActionState<AuthState, FormData>(register, {});
+  const modes = ["signin", "register"] as const;
+  // Arrow keys, Home and End move between the two tabs, as screen reader users expect.
+  const onTabKey = (e: React.KeyboardEvent) => {
+    const i = modes.indexOf(mode);
+    const to = { ArrowRight: i + 1, ArrowLeft: i - 1, Home: 0, End: modes.length - 1 }[e.key];
+    if (to === undefined) return;
+    e.preventDefault();
+    const m = modes[(to + modes.length) % modes.length];
+    setMode(m);
+    document.getElementById(`login-tab-${m}`)?.focus();
+  };
   const tab = (m: typeof mode, label: string) => (
-    <button type="button" role="tab" aria-selected={mode === m} onClick={() => setMode(m)} className={`min-h-11 flex-1 rounded-full text-sm font-semibold transition ${mode === m ? "bg-espresso text-[#fbf6ef]" : "text-muted"}`}>
+    <button type="button" role="tab" id={`login-tab-${m}`} aria-selected={mode === m} aria-controls="login-panel" tabIndex={mode === m ? 0 : -1} onClick={() => setMode(m)} onKeyDown={onTabKey} className={`min-h-11 flex-1 rounded-full text-sm font-semibold transition ${mode === m ? "bg-espresso text-[#fbf6ef]" : "text-muted"}`}>
       {label}
     </button>
   );
@@ -36,8 +47,9 @@ export function LoginForm({ next }: { next: string }) {
         {tab("register", "Create account")}
       </div>
 
+      <div role="tabpanel" id="login-panel" aria-labelledby={`login-tab-${mode}`}>
       {mode === "signin" ? (
-        <form action={inAction} className="space-y-4">
+        <form onSubmit={(e) => { e.preventDefault(); const fd = new FormData(e.currentTarget); startTransition(() => inAction(fd)); }} className="space-y-4">
           <input type="hidden" name="next" value={next} />
           <label className="block text-sm font-medium">
             Mobile number or email
@@ -48,7 +60,7 @@ export function LoginForm({ next }: { next: string }) {
           <button disabled={signingIn} className={`${btn.primary} w-full`}>{signingIn ? "Signing in…" : "Sign in"}</button>
         </form>
       ) : (
-        <form action={regAction} className="space-y-4">
+        <form onSubmit={(e) => { e.preventDefault(); const fd = new FormData(e.currentTarget); startTransition(() => regAction(fd)); }} className="space-y-4">
           <input type="hidden" name="next" value={next} />
           <label className="block text-sm font-medium">
             Your name <span className="font-normal text-muted">(optional)</span>
@@ -67,6 +79,7 @@ export function LoginForm({ next }: { next: string }) {
           </p>
         </form>
       )}
+      </div>
     </div>
   );
 }
