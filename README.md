@@ -28,7 +28,7 @@ Values are validated at server start in `src/env.ts`.
 
 ## Database
 
-SQL lives in `supabase/migrations` (applied in order) and `supabase/seed.sql` (menu, 16 tables, settings). Every table has row level security. Orders, payments and points are written only by the server with the service role.
+SQL lives in `supabase/migrations` (applied in order) and `supabase/seed.sql` (menu, 16 tables, settings). Every table has row level security. Orders are created only by the `place_order` database function, which re-checks prices, opening hours and options on the server; customers cannot write to the orders table directly. The app itself needs no service-role key.
 
 Each table's QR code is the random `code` column on `benches`, used as `/t/<code>`.
 

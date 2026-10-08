@@ -71,7 +71,7 @@ export default async function OrdersPage({ searchParams }: { searchParams: Promi
         {range !== "today" && <input type="hidden" name="range" value={range} />}
         {status !== "all" && <input type="hidden" name="status" value={status} />}
         {type !== "all" && <input type="hidden" name="type" value={type} />}
-        <input name="q" defaultValue={q} placeholder="Search order number, name, phone or table" aria-label="Search orders" className="min-h-11 w-full rounded-full border border-border bg-surface px-4 text-base outline-none focus:border-brand md:w-80" />
+        <input name="q" defaultValue={q} placeholder="Order #, name, phone or table" aria-label="Search orders by order number, name, phone or table" className="min-h-11 w-full rounded-full border border-border bg-surface px-4 text-base outline-none focus:border-brand md:w-96" />
         <button className="min-h-11 rounded-full bg-espresso px-5 text-sm font-semibold text-[#fbf6ef] transition active:scale-95">Search</button>
         {q && <Link href={href({ q: "" })} prefetch={false} className="inline-flex min-h-11 items-center px-2 text-sm font-semibold text-brand">Clear</Link>}
       </form>

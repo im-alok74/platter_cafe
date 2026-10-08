@@ -13,7 +13,7 @@ export function useOrdering(onOpen: (item: MenuItem) => void): Ordering {
     // One tap for a dish with no extras to choose: add it straight away.
     onAdd: (item, variantId) => {
       const v = item.variants.find((x) => x.id === variantId) ?? null;
-      cart.add({ itemId: item.id, name: item.name, isVeg: item.is_veg, variantId: v?.id ?? null, variantName: v?.name ?? null, addonIds: [], addonNames: [], unitPrice: v?.price ?? item.price, qty: 1, note: "" });
+      cart.add({ itemId: item.id, name: item.name, isVeg: item.is_veg, image: item.image?.url ?? null, variantId: v?.id ?? null, variantName: v?.name ?? null, addonIds: [], addonNames: [], unitPrice: v?.price ?? item.price, qty: 1, note: "" });
       navigator.vibrate?.(12);
     },
   };

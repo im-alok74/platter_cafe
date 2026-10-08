@@ -1,7 +1,8 @@
 "use client";
 import { m } from "motion/react";
+import { DishPhoto } from "@/components/dish-photo";
 import { Beans, SplitText, Steam } from "@/components/fx/fx";
-import Image from "next/image";
+import { Reveal } from "@/components/motion";
 import { useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import type { CartLine } from "@/lib/cart";
 import { formatPrice } from "@/lib/format";
@@ -31,31 +32,7 @@ function VegMark({ veg }: { veg: boolean }) {
   );
 }
 
-/** Photo, or a soft placeholder until the owner uploads one. */
-function Media({ item }: { item: MenuItem }) {
-  return (
-    <div className="relative aspect-[4/3] w-full overflow-hidden bg-border">
-      {item.image ? (
-        <Image src={item.image.url} alt="" fill sizes="(min-width: 768px) 33vw, 50vw" placeholder={item.image.blur_data_url ? "blur" : "empty"} blurDataURL={item.image.blur_data_url ?? undefined} className="object-cover" />
-      ) : (
-        <div aria-hidden className="flex h-full w-full items-center justify-center bg-sand">
-          <span className="font-display text-6xl text-brand/35">{item.name.charAt(0)}</span>
-        </div>
-      )}
-      <div className="absolute left-2 top-2 flex flex-col items-start gap-1">
-        {item.badges.map((b) => (
-          <span key={b} className={`rounded-md px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide ${badgeStyle[b] ?? "bg-foreground text-background"}`}>{b}</span>
-        ))}
-      </div>
-      <div className="absolute right-2 top-2"><VegMark veg={item.is_veg} /></div>
-      {item.sold_out && (
-        <div className="absolute inset-0 flex items-center justify-center bg-background/70 text-sm font-semibold uppercase tracking-wide">Sold out</div>
-      )}
-    </div>
-  );
-}
-
-function MenuCard({ item, ordering }: { item: MenuItem; ordering?: Ordering }) {
+function MenuCard({ item, ordering, index, reveal }: { item: MenuItem; ordering?: Ordering; index: number; reveal: boolean }) {
   const [variantId, setVariantId] = useState<string | null>(item.variants[0]?.id ?? null);
   const variant = item.variants.find((v) => v.id === variantId) ?? null;
   const price = variant?.price ?? item.price;
@@ -63,71 +40,79 @@ function MenuCard({ item, ordering }: { item: MenuItem; ordering?: Ordering }) {
   const line = ordering?.lines.find((l) => l.itemId === item.id && l.variantId === variantId && l.addonIds.length === 0 && !l.note);
   const total = ordering?.lines.filter((l) => l.itemId === item.id).reduce((n, l) => n + l.qty, 0) ?? 0;
 
-  const photo = Boolean(item.image);
   const head = (
     <>
-      {photo && <Media item={item} />}
-      <span className="block px-3 pt-3">
-        {!photo && (item.badges.length > 0 || item.sold_out) && (
-          <span className="mb-1.5 flex flex-wrap items-center gap-1.5">
-            {item.badges.map((b) => (
-              <span key={b} className={`rounded-md px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide ${badgeStyle[b] ?? "bg-foreground text-background"}`}>{b}</span>
-            ))}
-            {item.sold_out && <span className="rounded-md bg-nonveg px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-background">Sold out</span>}
-          </span>
+      <span className="relative block aspect-[4/3] w-full overflow-hidden bg-border">
+        <DishPhoto name={item.name} image={item.image} sizes="(min-width: 1024px) 25vw, (min-width: 768px) 33vw, 50vw" className="transition duration-700 ease-out group-hover:scale-110" />
+        <span className="absolute left-2 top-2 flex flex-col items-start gap-1">
+          {item.badges.map((b) => (
+            <span key={b} className={`rounded-md px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide shadow-sm ${badgeStyle[b] ?? "bg-foreground text-background"}`}>{b}</span>
+          ))}
+        </span>
+        <span className="absolute right-2 top-2"><VegMark veg={item.is_veg} /></span>
+        {item.sold_out && <span className="absolute inset-0 flex items-center justify-center bg-background/70 text-sm font-semibold uppercase tracking-wide">Sold out</span>}
+        {ordering && !item.sold_out && (
+          <span aria-hidden className="absolute bottom-2 right-2 translate-y-1 rounded-full bg-background/90 px-3 py-1 text-[11px] font-semibold opacity-0 shadow-sm backdrop-blur transition duration-300 group-hover:translate-y-0 group-hover:opacity-100 max-md:hidden">View dish</span>
         )}
+      </span>
+      <span className="block px-3.5 pt-3">
         {ordering ? (
-          <m.span layoutId={`item-${item.id}`} className="flex items-center gap-2 font-semibold leading-snug">{!photo && <VegMark veg={item.is_veg} />}{item.name}</m.span>
+          <m.span layoutId={`item-${item.id}`} className="block text-base font-semibold leading-snug">{item.name}</m.span>
         ) : (
-          <span className="flex items-center gap-2 font-semibold leading-snug">{!photo && <VegMark veg={item.is_veg} />}{item.name}</span>
+          <span className="block text-base font-semibold leading-snug">{item.name}</span>
         )}
         {item.description && <span className="mt-1 line-clamp-2 block text-sm text-muted">{item.description}</span>}
+        {ordering && !item.sold_out && Boolean(item.ingredients || item.method) && <span aria-hidden className="mt-1.5 inline-flex items-center gap-1 text-xs font-semibold text-brand">Details <span className="transition group-hover:translate-x-1">→</span></span>}
       </span>
     </>
   );
 
-  return (
-    <li className={`tilt flex flex-col overflow-hidden rounded-3xl border border-border bg-surface shadow-card transition hover:-translate-y-0.5 ${photo ? "" : "col-span-2 md:col-span-1"} ${item.sold_out ? "opacity-70" : ""}`}>
-      {ordering ? (
-        <button type="button" onClick={() => ordering.onOpen(item)} disabled={item.sold_out} className="block text-left" aria-label={`${item.name}, ${formatPrice(price)}${total ? `, ${total} in your order` : ""}. Open details`}>
-          {head}
-        </button>
-      ) : (
-        <div>{head}</div>
-      )}
-
-      <div className="mt-auto px-3 pb-3 pt-2">
-        {item.variants.length > 0 && (
-          <div role="group" aria-label={`Options for ${item.name}`} className="mb-2 flex flex-wrap gap-1.5">
-            {item.variants.map((v) => (
-              <button key={v.id} type="button" aria-pressed={variantId === v.id} onClick={() => setVariantId(v.id)} className={`min-h-11 rounded-md border px-2.5 text-xs font-medium transition active:scale-95 ${variantId === v.id ? "border-brand bg-brand/10 text-brand" : "border-border text-muted"}`}>
-                {v.name}
-              </button>
-            ))}
-          </div>
+  const frame = `group flex h-full flex-col overflow-hidden rounded-3xl border border-border bg-surface shadow-card ${item.sold_out ? "opacity-70" : ""}`;
+  const inner = (
+    <>
+        {ordering ? (
+          <button type="button" onClick={() => ordering.onOpen(item)} disabled={item.sold_out} className="block text-left" aria-label={`${item.name}, ${formatPrice(price)}${total ? `, ${total} in your order` : ""}. Open details`}>
+            {head}
+          </button>
+        ) : (
+          <div>{head}</div>
         )}
-        <div className="flex items-center justify-between gap-2">
-          <span className="text-lg font-bold tabular-nums">{formatPrice(price)}</span>
-          {ordering && !item.sold_out && (
-            line ? (
-              <span role="group" aria-label={`Quantity of ${item.name}`} className="flex items-center overflow-hidden rounded-lg border border-brand bg-brand/10">
-                <button type="button" aria-label="One less" className="flex h-11 w-11 items-center justify-center text-lg font-semibold text-brand active:bg-brand/20" onClick={() => ordering.onQty(line.key, line.qty - 1)}>−</button>
-                <m.span key={line.qty} initial={{ scale: 1.3 }} animate={{ scale: 1 }} className="w-6 text-center text-sm font-bold tabular-nums" aria-live="polite">{line.qty}</m.span>
-                <button type="button" aria-label="One more" disabled={line.qty >= 20} className="flex h-11 w-11 items-center justify-center text-lg font-semibold text-brand active:bg-brand/20" onClick={() => ordering.onQty(line.key, line.qty + 1)}>+</button>
-              </span>
-            ) : (
-              <button type="button" onClick={() => (item.addons.length > 0 ? ordering.onOpen(item) : ordering.onAdd(item, variantId))} className="min-h-11 rounded-lg bg-brand px-4 text-sm font-bold tracking-wide text-brand-foreground transition active:scale-95">
-                ADD
-              </button>
-            )
+
+        <div className="mt-auto px-3.5 pb-3.5 pt-2.5">
+          {item.variants.length > 0 && (
+            <div role="group" aria-label={`Options for ${item.name}`} className="mb-2 flex flex-wrap gap-1.5">
+              {item.variants.map((v) => (
+                <button key={v.id} type="button" aria-pressed={variantId === v.id} onClick={() => setVariantId(v.id)} className={`min-h-11 rounded-md border px-2.5 text-xs font-medium transition active:scale-95 ${variantId === v.id ? "border-brand bg-brand/10 text-brand" : "border-border text-muted"}`}>
+                  {v.name}
+                </button>
+              ))}
+            </div>
           )}
+          <div className="flex items-center justify-between gap-2">
+            <span className="text-lg font-bold tabular-nums">{formatPrice(price)}</span>
+            {ordering && !item.sold_out && (
+              line ? (
+                <span role="group" aria-label={`Quantity of ${item.name}`} className="flex items-center overflow-hidden rounded-lg border border-brand bg-brand/10">
+                  <button type="button" aria-label="One less" className="flex h-11 w-11 items-center justify-center text-lg font-semibold text-brand active:bg-brand/20" onClick={() => ordering.onQty(line.key, line.qty - 1)}>−</button>
+                  <m.span key={line.qty} initial={{ scale: 1.3 }} animate={{ scale: 1 }} className="w-6 text-center text-sm font-bold tabular-nums" aria-live="polite">{line.qty}</m.span>
+                  <button type="button" aria-label="One more" disabled={line.qty >= 20} className="flex h-11 w-11 items-center justify-center text-lg font-semibold text-brand active:bg-brand/20" onClick={() => ordering.onQty(line.key, line.qty + 1)}>+</button>
+                </span>
+              ) : (
+                <button type="button" onClick={() => (item.addons.length > 0 ? ordering.onOpen(item) : ordering.onAdd(item, variantId))} className="min-h-11 rounded-lg bg-brand px-5 text-sm font-bold tracking-wide text-brand-foreground transition active:scale-95">
+                  ADD
+                </button>
+              )
+            )}
+          </div>
         </div>
-      </div>
-    </li>
+    </>
   );
+
+  // Scroll reveal is for the public menu; at the table, where people order, cards just appear.
+  return <li className="tilt">{reveal ? <Reveal delay={(index % 4) * 0.06} className={frame}>{inner}</Reveal> : <div className={frame}>{inner}</div>}</li>;
 }
 
-export function MenuBrowser({ categories, ordering, summary }: { categories: MenuCategory[]; ordering?: Ordering; summary?: string }) {
+export function MenuBrowser({ categories, ordering, summary, reveal = false }: { categories: MenuCategory[]; ordering?: Ordering; summary?: string; reveal?: boolean }) {
   const [query, setQuery] = useState("");
   const [vegOnly, setVegOnly] = useState(false);
   const [active, setActive] = useState(categories[0]?.slug ?? "");
@@ -243,8 +228,8 @@ export function MenuBrowser({ categories, ordering, summary }: { categories: Men
               <span className="text-sm text-muted">{c.items.length} {c.items.length === 1 ? "item" : "items"}</span>
             </div>
             <ul className="grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-4">
-              {c.items.map((i) => (
-                <MenuCard key={`${c.id}-${i.id}`} item={i} ordering={ordering} />
+              {c.items.map((i, n) => (
+                <MenuCard key={`${c.id}-${i.id}`} item={i} ordering={ordering} index={n} reveal={reveal} />
               ))}
             </ul>
           </section>

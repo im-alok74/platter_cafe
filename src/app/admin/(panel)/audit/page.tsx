@@ -9,21 +9,44 @@ export const instant = false;
 export const metadata = { title: "Audit log" };
 
 const PAGE = 40;
-const SKIP = new Set(["updated_at", "created_at", "search"]);
-const noun: Record<string, string> = { items: "item", item_variants: "item option", categories: "category", benches: "table", media_assets: "photo", staff_roles: "staff role", staff_invites: "staff invite", settings: "setting", points_ledger: "points entry" };
+const SKIP = new Set(["updated_at", "created_at", "search", "cafe_id", "sort"]);
+const noun: Record<string, string> = { items: "dish", item_variants: "dish option", categories: "menu section", benches: "table", media_assets: "photo", staff_roles: "staff role", staff_invites: "staff invite", settings: "setting", points_ledger: "points entry", addons: "extra" };
 const when = new Intl.DateTimeFormat("en-IN", { timeZone: "Asia/Kolkata", dateStyle: "medium", timeStyle: "short" });
 
 type Row = { id: number; actor_email: string | null; action: string; table_name: string; old_data: Record<string, unknown> | null; new_data: Record<string, unknown> | null; created_at: string };
 
-/** One line saying what changed: the name for new and removed rows, field changes for edits. */
+/** A value a person can read: no quotes, no ids, long text shortened. */
+function show(v: unknown): string {
+  if (v === null || v === undefined || v === "") return "empty";
+  if (typeof v === "boolean") return v ? "yes" : "no";
+  if (typeof v === "object") {
+    const o = v as Record<string, unknown>;
+    // Settings are stored as {"name": "..."} or similar: show the plain value.
+    const vals = Object.values(o);
+    return vals.length === 1 && typeof vals[0] !== "object" ? String(vals[0]) : JSON.stringify(v).slice(0, 60);
+  }
+  const t = String(v);
+  return t.length > 60 ? `${t.slice(0, 57)}…` : t;
+}
+
+const field = (k: string) => k.replace(/_/g, " ");
+
+/** One plain sentence saying what changed. Ids are never shown: a changed image or section reads as "photo changed". */
 function summary(r: Row) {
   const row = r.new_data ?? r.old_data ?? {};
+  if (r.table_name === "media_assets") return `${show(row.kind)} photo`;
+  if (r.table_name === "staff_roles") return `role: ${show(row.role)}`;
   const label = String(row.name ?? row.title ?? row.label ?? row.key ?? row.email ?? "");
   if (r.action !== "UPDATE" || !r.old_data || !r.new_data) return label;
   const changes = Object.keys(r.new_data)
     .filter((k) => !SKIP.has(k) && JSON.stringify(r.old_data![k]) !== JSON.stringify(r.new_data![k]))
     .slice(0, 4)
-    .map((k) => `${k}: ${JSON.stringify(r.old_data![k])} → ${JSON.stringify(r.new_data![k])}`);
+    .map((k) => {
+      const was = r.old_data![k], now = r.new_data![k];
+      if (k === "image_id") return was && !now ? "photo removed" : !was ? "photo added" : "photo changed";
+      if (k.endsWith("_id")) return `${field(k.slice(0, -3))} changed`;
+      return `${field(k)}: ${show(was)} → ${show(now)}`;
+    });
   return `${label}${changes.length ? ` (${changes.join(", ")})` : ""}`;
 }
 
@@ -47,7 +70,7 @@ export default async function AuditPage({ searchParams }: { searchParams: Promis
           <li key={r.id} className={card}>
             <p className="text-sm"><strong>{r.action === "INSERT" ? "Added" : r.action === "DELETE" ? "Deleted" : "Changed"}</strong> {noun[r.table_name] ?? r.table_name.replace(/_/g, " ")}</p>
             <p className="break-words text-sm text-muted">{summary(r)}</p>
-            <p className="mt-1 text-xs text-muted">{r.actor_email ?? "System"} · {when.format(new Date(r.created_at))}</p>
+            <p className="mt-1 text-xs text-muted">{r.actor_email ?? "System (not signed in)"} · {when.format(new Date(r.created_at))}</p>
           </li>
         ))}
       </ul>

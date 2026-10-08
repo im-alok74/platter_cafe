@@ -1,6 +1,6 @@
 import type { CartLine } from "./cart";
 
-export type CatalogItem = { name: string; isVeg: boolean; price: number; soldOut: boolean; variants: { id: string; name: string; price: number }[]; addons: { id: string; name: string; price: number }[] };
+export type CatalogItem = { name: string; isVeg: boolean; image?: string | null; price: number; soldOut: boolean; variants: { id: string; name: string; price: number }[]; addons: { id: string; name: string; price: number }[] };
 export type PastLine = { item_id: string | null; name: string; variant_name: string | null; qty: number; addons: { id: string; name: string }[] };
 
 /**
@@ -17,7 +17,7 @@ export function buildReorderLines(past: PastLine[], catalog: Record<string, Cata
     if (c.variants.length && !variant) { skipped.push(it.name); continue; }
     const addons = c.addons.filter((a) => it.addons.some((x) => x.id === a.id));
     lines.push({
-      itemId: it.item_id, name: c.name, isVeg: c.isVeg, variantId: variant?.id ?? null, variantName: variant?.name ?? null,
+      itemId: it.item_id, name: c.name, isVeg: c.isVeg, image: c.image ?? null, variantId: variant?.id ?? null, variantName: variant?.name ?? null,
       addonIds: addons.map((a) => a.id), addonNames: addons.map((a) => a.name),
       unitPrice: (variant?.price ?? c.price) + addons.reduce((n, a) => n + a.price, 0), qty: it.qty, note: "",
     });

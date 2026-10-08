@@ -6,6 +6,7 @@ import { CountUp, Magnetic } from "@/components/fx/fx-client";
 import { ArrowIcon, BagIcon, QrIcon, ScooterIcon } from "@/components/icons";
 import { Reveal } from "@/components/motion";
 import { OpenBadge } from "@/components/open-badge";
+import { OrderCta, ViewMenuLink } from "@/components/order-cta";
 import { getMenu } from "@/lib/data/menu";
 import { getGallery, getSettings } from "@/lib/data/site";
 import { formatPrice } from "@/lib/format";
@@ -34,8 +35,8 @@ async function HeroX() {
               Good coffee, good food and a table that&apos;s waiting. Scan, order, and watch it arrive.
             </p>
             <div className="mt-8 flex flex-wrap gap-3">
-              <Magnetic><Link href="/menu" className={primary}>Order now <ArrowIcon width={20} height={20} /></Link></Magnetic>
-              <Magnetic><Link href="/menu" className={ghostLight}>View menu</Link></Magnetic>
+              <Magnetic><OrderCta hours={s.hours} className={primary} /></Magnetic>
+              <Magnetic><ViewMenuLink hours={s.hours} className={ghostLight} /></Magnetic>
             </div>
             <div className="mt-7"><OpenBadge hours={s.hours} /></div>
           </div>
@@ -240,7 +241,8 @@ async function ReelX() {
   );
 }
 
-function ClosingX() {
+async function ClosingX() {
+  const s = await getSettings();
   return (
     <section className="relative mt-24 overflow-hidden bg-espresso text-[#fbf6ef]">
       <Wave className="-mb-px text-background" />
@@ -250,7 +252,7 @@ function ClosingX() {
           <span className="block"><SplitText text="See you" /></span>
           <span className="block text-gold italic"><SplitText text="at the table." delay={300} /></span>
         </h2>
-        <Magnetic><Link href="/menu" className={primary}>Order now <ArrowIcon width={20} height={20} /></Link></Magnetic>
+        <Magnetic><OrderCta hours={s.hours} className={primary} /></Magnetic>
       </div>
     </section>
   );

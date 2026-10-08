@@ -5,6 +5,7 @@ import { HomePicks } from "@/components/home-picks";
 import { ArrowIcon, BagIcon, ClockIcon, PhoneIcon, PinIcon, QrIcon, ScooterIcon } from "@/components/icons";
 import { Reveal } from "@/components/motion";
 import { OpenBadge } from "@/components/open-badge";
+import { OrderCta, ViewMenuLink } from "@/components/order-cta";
 import { getMenu } from "@/lib/data/menu";
 import { getGallery, getOffers, getSettings } from "@/lib/data/site";
 import { formatPrice, telHref, waHref } from "@/lib/format";
@@ -42,8 +43,8 @@ export async function Hero() {
             Coffee, breakfast, pizza, pasta and Indian mains. Scan the QR on your table, take it away, or get it delivered across Jaipur.
           </p>
           <div className="mt-7 flex flex-wrap gap-3">
-            <Link href="/menu" className={primary}>Order now <ArrowIcon width={20} height={20} /></Link>
-            <Link href="/menu" className={ghost}>View menu</Link>
+            <OrderCta hours={s.hours} className={primary} />
+            <ViewMenuLink hours={s.hours} className={ghost} />
           </div>
           <div className="mt-7 flex flex-wrap items-center gap-3 text-sm text-muted">
             <OpenBadge hours={s.hours} />

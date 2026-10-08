@@ -4,6 +4,8 @@ import { useState } from "react";
 import { useCart } from "@/lib/cart";
 import type { DeliveryRules } from "@/lib/delivery";
 import { cartUi, useCartUi } from "@/lib/cart-ui";
+import { formatTime, type Hours } from "@/lib/hours";
+import { useOpen } from "@/lib/use-open";
 import { useSavedBench } from "@/lib/bench";
 import { formatPrice } from "@/lib/format";
 import { spring } from "@/lib/motion/tokens";
@@ -12,10 +14,13 @@ import { CartDrawer } from "./cart-drawer";
 import { ItemSheet } from "./item-sheet";
 
 /** Cart for the public website: the item sheet, the order drawer and the floating bar, available on every page. */
-export function CartHost({ gstPercent, whatsapp, delivery, deliveryEnabled }: { gstPercent: number; whatsapp: string; delivery: DeliveryRules; deliveryEnabled: boolean }) {
+export function CartHost({ gstPercent, whatsapp, delivery, deliveryEnabled, hours, enforceHours }: { gstPercent: number; whatsapp: string; delivery: DeliveryRules; deliveryEnabled: boolean; hours: Hours; enforceHours: boolean }) {
   const { count, subtotal } = useCart();
   const { drawer, item } = useCartUi();
   const saved = useSavedBench();
+  // Same rule as the table menu: while closed the guest can fill a cart, but the order button says why it is off.
+  const open = useOpen(hours);
+  const closed = enforceHours && !open ? `Closed now — we take orders from ${formatTime(hours.open)}` : null;
   // "Not at the table?" forgets the scanned table, so the website stops treating this visitor as dining in.
   const [notAtTable, setNotAtTable] = useState(false);
   const bench = notAtTable ? null : saved;
@@ -32,7 +37,7 @@ export function CartHost({ gstPercent, whatsapp, delivery, deliveryEnabled }: { 
     <MotionProvider full>
       <AnimatePresence>{item && <ItemSheet key={item.id} item={item} onClose={cartUi.closeItem} onAdded={cartUi.closeItem} />}</AnimatePresence>
       <AnimatePresence>
-        {drawer && <CartDrawer code={bench?.code ?? null} tableLabel={bench?.label ?? null} onNotAtTable={bench ? leaveTable : undefined} gstPercent={gstPercent} whatsapp={whatsapp} delivery={delivery} deliveryEnabled={deliveryEnabled} prefill={null} onClose={cartUi.closeDrawer} />}
+        {drawer && <CartDrawer code={bench?.code ?? null} tableLabel={bench?.label ?? null} onNotAtTable={bench ? leaveTable : undefined} gstPercent={gstPercent} whatsapp={whatsapp} delivery={delivery} deliveryEnabled={deliveryEnabled} prefill={null} closed={closed} onClose={cartUi.closeDrawer} />}
       </AnimatePresence>
       <AnimatePresence>
         {count > 0 && !drawer && !item && (
@@ -42,7 +47,7 @@ export function CartHost({ gstPercent, whatsapp, delivery, deliveryEnabled }: { 
                 <m.span key={count} initial={{ scale: 1.4 }} animate={{ scale: 1 }} transition={spring} className="flex h-7 min-w-7 items-center justify-center rounded-full bg-brand-foreground px-1.5 text-sm text-brand tabular-nums">{count}</m.span>
                 View order
               </span>
-              <span className="font-semibold tabular-nums">{formatPrice(subtotal)}</span>
+              <span className="font-semibold tabular-nums">{formatPrice(subtotal)} <span className="text-xs font-medium opacity-80">+ GST</span></span>
             </button>
           </m.div>
         )}

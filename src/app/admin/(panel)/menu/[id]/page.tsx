@@ -17,7 +17,7 @@ export default async function EditItem({ params }: { params: Promise<{ id: strin
   const [{ data: cats }, { data: allAddons }] = await Promise.all([db.from("categories").select("id,name").order("sort"), db.from("addons").select("id,name,price").order("name")]);
   if (!cats?.length) throw new Error("Create a category first.");
 
-  let item: ItemData = { category_id: cats[0].id, name: "", description: "", price: "", is_veg: true, delivery_available: true, badges: [], available_from: "", available_to: "", variants: [], addons: [], image: null };
+  let item: ItemData = { category_id: cats[0].id, name: "", description: "", ingredients: "", method: "", price: "", is_veg: true, delivery_available: true, badges: [], available_from: "", available_to: "", variants: [], addons: [], image: null };
   if (id !== "new") {
     if (!z.uuid().safeParse(id).success) notFound();
     const { data } = await db
@@ -32,6 +32,8 @@ export default async function EditItem({ params }: { params: Promise<{ id: strin
       category_id: data.category_id,
       name: data.name,
       description: data.description ?? "",
+      ingredients: data.ingredients ?? "",
+      method: data.method ?? "",
       price: Number(data.price),
       is_veg: data.is_veg,
       delivery_available: data.delivery_available,

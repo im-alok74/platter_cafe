@@ -45,8 +45,9 @@ export function TrendChart({ data }: { data: { label: string; sales: number; ord
 }
 
 /** Orders by hour of the day: shows the rush. The busiest hour is highlighted. */
-export function HourChart({ data }: { data: { hour: number; orders: number }[] }) {
-  const shown = data.filter((d) => d.hour >= 7);
+/** Orders by hour. Shows the cafe's opening hours (an hour outside them still appears if it had orders). */
+export function HourChart({ data, from = 7, to = 22 }: { data: { hour: number; orders: number }[]; from?: number; to?: number }) {
+  const shown = data.filter((d) => (d.hour >= from && d.hour <= to) || d.orders > 0);
   const max = Math.max(1, ...shown.map((d) => d.orders));
   const peak = shown.reduce((a, b) => (b.orders > a.orders ? b : a), shown[0]);
   const W = 360, H = 210, padB = 28, padT = 10;

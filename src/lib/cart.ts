@@ -6,6 +6,7 @@ export type CartLine = {
   itemId: string;
   name: string;
   isVeg: boolean;
+  image?: string | null; // photo for the order list; display only, and absent in carts saved before photos were shown
   variantId: string | null;
   variantName: string | null;
   addonIds: string[];

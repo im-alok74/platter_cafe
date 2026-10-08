@@ -1,7 +1,7 @@
 "use client";
 import { useState } from "react";
 import { card } from "@/components/admin/ui";
-import { formatPrice } from "@/lib/format";
+import { formatMoney } from "@/lib/format";
 import { orderTypeLabel, type OrderStatus } from "@/lib/order";
 
 export type FullOrder = {
@@ -13,6 +13,7 @@ export type FullOrder = {
 
 const chip: Record<OrderStatus, string> = { received: "bg-brand/15 text-brand", preparing: "bg-gold/25 text-[#7a5a1c]", ready: "bg-veg/15 text-veg", served: "bg-border text-muted", cancelled: "bg-nonveg/10 text-nonveg" };
 const when = new Intl.DateTimeFormat("en-IN", { timeZone: "Asia/Kolkata", day: "numeric", month: "short", hour: "numeric", minute: "2-digit" });
+const count = (o: FullOrder) => o.items.reduce((n, i) => n + i.qty, 0);
 const place = (o: FullOrder) => (o.order_type === "dine_in" ? (o.benches?.label ?? (o.table_hint ? `Table ${o.table_hint}` : "Dine in")) : o.order_type === "delivery" ? `Delivery${o.delivery_km ? ` · ${o.delivery_km} km` : ""}` : orderTypeLabel[o.order_type]);
 
 /** One page of orders, already filtered by the server. Only the open/close of a row is client state. */
@@ -30,9 +31,9 @@ export function OrdersTable({ orders }: { orders: FullOrder[] }) {
                 <span className="w-12 font-semibold tabular-nums">#{o.order_no}</span>
                 <span className="min-w-0 flex-1">
                   <span className="block truncate font-medium">{place(o)}{o.guest_name ? ` · ${o.guest_name}` : ""}</span>
-                  <span className="block text-xs text-muted">{when.format(new Date(o.placed_at))} · {o.items.reduce((n, i) => n + i.qty, 0)} items</span>
+                  <span className="block text-xs text-muted">{when.format(new Date(o.placed_at))} · {count(o)} {count(o) === 1 ? "item" : "items"}</span>
                 </span>
-                <span className="font-medium tabular-nums">{formatPrice(Number(o.total))}</span>
+                <span className="font-medium tabular-nums">{formatMoney(Number(o.total))}</span>
                 <span className={`hidden rounded-full px-2.5 py-1 text-xs font-semibold capitalize sm:inline ${chip[o.status]}`}>{o.status}</span>
                 <span aria-hidden className={`text-muted transition ${isOpen ? "rotate-90" : ""}`}>›</span>
               </button>
@@ -43,7 +44,7 @@ export function OrdersTable({ orders }: { orders: FullOrder[] }) {
                     {o.items.map((i, k) => (
                       <li key={k} className="flex justify-between gap-3">
                         <span><b className="tabular-nums">{i.qty} ×</b> {i.name}{i.variant_name ? ` (${i.variant_name})` : ""}</span>
-                        <span className="tabular-nums text-muted">{formatPrice(i.qty * Number(i.unit_price))}</span>
+                        <span className="tabular-nums text-muted">{formatMoney(i.qty * Number(i.unit_price))}</span>
                       </li>
                     ))}
                   </ul>

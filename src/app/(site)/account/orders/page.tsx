@@ -30,7 +30,7 @@ export default async function OrdersPage({ searchParams }: { searchParams: Promi
   const catalog: Record<string, CatalogItem> = {};
   for (const c of menu)
     for (const i of c.items)
-      if (used.has(i.id)) catalog[i.id] = { name: i.name, isVeg: i.is_veg, price: i.price, soldOut: i.sold_out, variants: i.variants.map((v) => ({ id: v.id, name: v.name, price: Number(v.price) })), addons: i.addons };
+      if (used.has(i.id)) catalog[i.id] = { name: i.name, isVeg: i.is_veg, image: i.image?.url ?? null, price: i.price, soldOut: i.sold_out, variants: i.variants.map((v) => ({ id: v.id, name: v.name, price: Number(v.price) })), addons: i.addons };
 
   return (
     <>

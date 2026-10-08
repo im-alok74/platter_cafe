@@ -10,7 +10,8 @@ import type { DeliveryRules } from "@/lib/delivery";
 import { useOrdering } from "@/lib/use-ordering";
 import type { MenuCategory, MenuItem } from "@/lib/data/menu";
 import { formatPrice } from "@/lib/format";
-import { formatTime, isOpenNow, type Hours } from "@/lib/hours";
+import { formatTime, type Hours } from "@/lib/hours";
+import { useOpen } from "@/lib/use-open";
 import { createClient } from "@/lib/supabase/browser";
 import { spring } from "@/lib/motion/tokens";
 import { CartDrawer } from "./cart-drawer";
@@ -27,13 +28,6 @@ const lastOrderSnapshot = () => {
 };
 
 const useLastOrder = () => useSyncExternalStore(() => () => {}, lastOrderSnapshot, () => null);
-
-// Open or closed by the cafe's clock, rechecked every minute. Assumed open on the server; the place-order action checks again.
-const everyMinute = (cb: () => void) => {
-  const id = setInterval(cb, 60_000);
-  return () => clearInterval(id);
-};
-const useOpen = (hours: Hours) => useSyncExternalStore(everyMinute, () => isOpenNow(hours), () => true);
 
 type Customer = { id: string; name: string; phone: string };
 
@@ -136,7 +130,7 @@ export function OrderApp({ code, tableLabel, categories, gstPercent, whatsapp, d
                 <m.span key={count} initial={{ scale: 1.4 }} animate={{ scale: 1 }} transition={spring} className="flex h-7 min-w-7 items-center justify-center rounded-full bg-brand-foreground px-1.5 text-sm text-brand tabular-nums">{count}</m.span>
                 View order
               </span>
-              <span className="font-semibold tabular-nums">{formatPrice(subtotal)}</span>
+              <span className="font-semibold tabular-nums">{formatPrice(subtotal)} <span className="text-xs font-medium opacity-80">+ GST</span></span>
             </button>
           </m.div>
         )}

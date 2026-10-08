@@ -14,7 +14,7 @@ export type Contact = {
 export type Legal = { entity: string; tagline: string; fssai: string; fssai_valid_to: string; gst_number: string };
 export type Flags = { delivery: boolean; referrals: boolean; popups: boolean; loyalty: boolean; blog: boolean };
 export type TemplateName = "minimal" | "expressive";
-export type SiteSettings = { hours: Hours; contact: Contact; legal: Legal; flags: Flags; tax: { gst_percent: number }; delivery: DeliveryRules; template?: { name: TemplateName } };
+export type SiteSettings = { hours: Hours; contact: Contact; legal: Legal; flags: Flags; tax: { gst_percent: number }; delivery: DeliveryRules; template?: { name: TemplateName }; ops?: { enforce_hours?: boolean } };
 
 /** Which public look is switched on. Expressive unless the owner picks Minimal in Admin > Design. */
 export const templateOf = (s: Pick<SiteSettings, "template">): TemplateName => (s.template?.name === "minimal" ? "minimal" : "expressive");

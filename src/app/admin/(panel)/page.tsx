@@ -4,6 +4,7 @@ import { OrderRows } from "@/components/admin/order-rows";
 import { card } from "@/components/admin/ui";
 import { requireStaff } from "@/lib/admin/auth";
 import { getDashboard } from "@/lib/admin/analytics";
+import { getSettings } from "@/lib/data/site";
 import { istDayStart } from "@/lib/admin/range";
 import { formatPrice } from "@/lib/format";
 import { createClient } from "@/lib/supabase/server";
@@ -104,11 +105,13 @@ export default async function Dashboard({ searchParams }: { searchParams: Promis
   }
 
   // ---- Owner and manager: the numbers.
-  const a = await getDashboard(await createClient(), staff.cafeId, days);
+  const [a, settings] = await Promise.all([getDashboard(await createClient(), staff.cafeId, days), getSettings()]);
+  const openHour = Number(settings.hours.open.slice(0, 2));
+  const closeHour = Math.ceil(Number(settings.hours.close.slice(0, 2)) + Number(settings.hours.close.slice(3, 5)) / 60) - 1;
   const { items, soldOut, hidden, noPhoto } = a.menu;
   const tables = a.tables;
   const recent = a.recent;
-  const peak = a.hours.filter((h) => h.hour >= 7).reduce((x, y) => (y.orders > x.orders ? y : x), { hour: 0, orders: 0 });
+  const peak = a.hours.filter((h) => h.hour >= openHour && h.hour <= closeHour).reduce((x, y) => (y.orders > x.orders ? y : x), { hour: 0, orders: 0 });
   const hourName = (h: number) => `${h % 12 || 12} ${h < 12 ? "AM" : "PM"}`;
   const noData = a.orders === 0;
 
@@ -157,7 +160,7 @@ export default async function Dashboard({ searchParams }: { searchParams: Promis
         <>
           <div className="mt-4 grid gap-4 lg:grid-cols-3">
             <Panel title="Sales and orders" hint={`Last ${days} days`} className="lg:col-span-2"><TrendChart data={a.daily} /></Panel>
-            <Panel title="Busiest hours" hint={peak.orders ? `Peak: ${hourName(peak.hour)}` : undefined}><HourChart data={a.hours} /></Panel>
+            <Panel title="Busiest hours" hint={peak.orders ? `Peak: ${hourName(peak.hour)}` : undefined}><HourChart data={a.hours} from={openHour} to={closeHour} /></Panel>
           </div>
           <div className="mt-4 grid gap-4 lg:grid-cols-3">
             <Panel title="How people order"><Donut parts={a.types} /></Panel>

@@ -1,6 +1,7 @@
 "use client";
 import { m, useDragControls } from "motion/react";
 import { useEffect, useRef, useState } from "react";
+import { DishPhoto } from "@/components/dish-photo";
 import { cart } from "@/lib/cart";
 import { formatPrice } from "@/lib/format";
 import { useFocusTrap } from "@/lib/use-focus-trap";
@@ -61,12 +62,14 @@ export function ItemSheet({ item, onClose, onAdded, favourite }: { item: MenuIte
   const variant = item.variants.find((v) => v.id === variantId) ?? null;
   const addons = item.addons.filter((a) => addonIds.includes(a.id));
   const unit = (variant?.price ?? item.price) + addons.reduce((n, a) => n + a.price, 0);
+  const ingredients = (item.ingredients ?? "").split(/[,;\n]/).map((x) => x.trim()).filter(Boolean);
 
   function add() {
     cart.add({
       itemId: item.id,
       name: item.name,
       isVeg: item.is_veg,
+      image: item.image?.url ?? null,
       variantId,
       variantName: variant?.name ?? null,
       addonIds,
@@ -84,8 +87,24 @@ export function ItemSheet({ item, onClose, onAdded, favourite }: { item: MenuIte
   return (
     <SheetFrame label={item.name} onClose={onClose}>
       <div className="min-h-0 flex-1 overflow-y-auto px-5 pb-4">
+        <div className="relative mb-4 aspect-[16/10] overflow-hidden rounded-2xl bg-border">
+          <DishPhoto name={item.name} image={item.image} sizes="(min-width: 576px) 536px, 100vw" priority />
+          <span className="absolute left-3 top-3 flex flex-wrap gap-1.5">
+            {item.badges.map((b) => <span key={b} className="rounded-md bg-foreground px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-background shadow-sm">{b}</span>)}
+          </span>
+        </div>
         <div className="flex items-start justify-between gap-3">
-          <m.h2 layoutId={`item-${item.id}`} className="font-display text-2xl leading-tight">{item.name}</m.h2>
+          <div className="min-w-0">
+            <m.h2 layoutId={`item-${item.id}`} className="font-display text-3xl leading-tight">{item.name}</m.h2>
+            <p className="mt-1.5 flex items-center gap-2 text-sm text-muted">
+              <span role="img" aria-label={item.is_veg ? "Vegetarian" : "Non-vegetarian"} className={`inline-flex h-5 w-5 items-center justify-center rounded-[4px] border-2 ${item.is_veg ? "border-veg" : "border-nonveg"}`}>
+                <span className={`h-2.5 w-2.5 rounded-full ${item.is_veg ? "bg-veg" : "bg-nonveg"}`} />
+              </span>
+              {item.is_veg ? "Vegetarian" : "Non-vegetarian"}
+              <span aria-hidden>·</span>
+              <span className="font-semibold tabular-nums text-foreground">{formatPrice(variant?.price ?? item.price)}</span>
+            </p>
+          </div>
           {favourite && (
             <button onClick={favourite.toggle} aria-pressed={favourite.on} aria-label={favourite.on ? "Remove from favourites" : "Add to favourites"} className="-mr-2 flex h-11 w-11 shrink-0 items-center justify-center rounded-full transition active:scale-90">
               <m.svg key={String(favourite.on)} width="26" height="26" viewBox="0 0 24 24" initial={{ scale: favourite.on ? 0.6 : 1 }} animate={{ scale: 1 }} transition={spring} fill={favourite.on ? "var(--brand)" : "none"} stroke="var(--brand)" strokeWidth="2" strokeLinejoin="round">
@@ -94,7 +113,23 @@ export function ItemSheet({ item, onClose, onAdded, favourite }: { item: MenuIte
             </button>
           )}
         </div>
-        {item.description && <p className="mt-1 text-sm text-muted">{item.description}</p>}
+        {item.description && <p className="mt-3 leading-relaxed text-muted">{item.description}</p>}
+
+        {/* Shown only when someone has written them in Admin > Menu: no text, no section, nothing invented. */}
+        {ingredients.length > 0 && (
+          <section className="mt-5" aria-labelledby="dish-in-it">
+            <h3 id="dish-in-it" className="text-sm font-semibold">What is in it</h3>
+            <ul className="mt-2 flex flex-wrap gap-1.5">
+              {ingredients.map((i) => <li key={i} className="rounded-full border border-border bg-surface px-3 py-1 text-sm">{i}</li>)}
+            </ul>
+          </section>
+        )}
+        {item.method && (
+          <section className="mt-5" aria-labelledby="dish-how">
+            <h3 id="dish-how" className="text-sm font-semibold">How it is made</h3>
+            <p className="mt-1 whitespace-pre-line leading-relaxed text-muted">{item.method}</p>
+          </section>
+        )}
 
         {item.variants.length > 0 && (
           <fieldset className="mt-5">

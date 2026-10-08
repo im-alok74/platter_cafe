@@ -6,6 +6,8 @@ export type MenuItem = {
   category_id: string;
   name: string;
   description: string | null;
+  ingredients: string | null;
+  method: string | null;
   price: number;
   is_veg: boolean;
   badges: string[];
@@ -40,7 +42,7 @@ export async function getMenu(): Promise<MenuCategory[]> {
     db
       .from("items")
       .select(
-        "id,category_id,name,description,price,is_veg,badges,sold_out,is_special,delivery_available,available_from,available_to,image:media_assets!items_image_id_fkey(url,blur_data_url,width,height),variants:item_variants(id,name,price,sort),item_addons(addon:addons(id,name,price,hidden))",
+        "id,category_id,name,description,ingredients,method,price,is_veg,badges,sold_out,is_special,delivery_available,available_from,available_to,image:media_assets!items_image_id_fkey(url,blur_data_url,width,height),variants:item_variants(id,name,price,sort),item_addons(addon:addons(id,name,price,hidden))",
       )
       .order("sort"),
   ]);

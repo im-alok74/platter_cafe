@@ -7,7 +7,7 @@ import { cart } from "@/lib/cart";
 import { buildReorderLines, type CatalogItem } from "@/lib/reorder";
 import { useSavedBench } from "@/lib/bench";
 import { cartUi } from "@/lib/cart-ui";
-import { formatPrice } from "@/lib/format";
+import { formatMoney } from "@/lib/format";
 import { orderTypeLabel, type OrderStatus } from "@/lib/order";
 
 export type HistoryOrder = {
@@ -60,7 +60,7 @@ export function OrderList({ orders, catalog }: { orders: HistoryOrder[]; catalog
             <span className={`rounded-full px-3 py-1 text-xs font-medium capitalize ${chip[o.status]}`}>{o.status}</span>
           </div>
           <p className="mt-2 text-sm">{o.items.map((i) => `${i.qty} × ${i.name}${i.variant_name ? ` (${i.variant_name})` : ""}`).join(", ")}</p>
-          <p className="mt-1 font-medium tabular-nums">{formatPrice(o.total)}</p>
+          <p className="mt-1 font-medium tabular-nums">{formatMoney(o.total)}</p>
           <div className="mt-3 flex flex-wrap gap-2">
             <button onClick={() => reorder(o)} className={btn.primary}>Order again</button>
             {o.status !== "served" && o.status !== "cancelled" && <Link href={`/order/${o.id}`} className={btn.ghost}>Track</Link>}

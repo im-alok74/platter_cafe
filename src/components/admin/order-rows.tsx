@@ -1,4 +1,4 @@
-import { formatPrice } from "@/lib/format";
+import { formatMoney } from "@/lib/format";
 import { orderTypeLabel, type OrderStatus } from "@/lib/order";
 
 export type OrderRow = {
@@ -28,7 +28,7 @@ export function OrderRows({ orders }: { orders: OrderRow[] }) {
             <span className="block truncate font-medium">{where(o)}{o.guest_name ? ` · ${o.guest_name}` : ""}</span>
             <span className="block text-xs text-muted">{time.format(new Date(o.placed_at))}</span>
           </span>
-          <span className="font-medium tabular-nums">{formatPrice(Number(o.total))}</span>
+          <span className="font-medium tabular-nums">{formatMoney(Number(o.total))}</span>
           <span className={`rounded-full px-2.5 py-1 text-xs font-semibold capitalize ${chip[o.status]}`}>{o.status}</span>
         </li>
       ))}

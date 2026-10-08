@@ -1,0 +1,60 @@
+/* Kitchen order ticket: 80 mm receipt paper, black on white (a thermal printer has no grey and no colour).
+   No page size is set on purpose: the receipt printer's own paper setting decides the roll width and length, so a long
+   ticket is never cut into pages. The ticket is 72 mm wide, which fits an 80 mm roll with a small margin each side. */
+@page kot { margin: 0; }
+
+.kot {
+  page: kot;
+  width: 72mm;
+  margin: 0 auto;
+  padding: 3mm 0 7mm;
+  color: #000;
+  background: #fff;
+  font-family: ui-sans-serif, system-ui, "Segoe UI", Arial, sans-serif;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.2;
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
+}
+.kot, .kot * { box-sizing: border-box; }
+:where(.kot p) { margin: 0; } /* zero specificity, so the spacing set on each part below still wins */
+
+.kot-head { text-align: center; }
+.kot-brand { font-size: 5.5mm; font-weight: 800; letter-spacing: 1.6mm; padding-left: 1.6mm; }
+.kot-sub { font-size: 2.8mm; font-weight: 600; letter-spacing: 0.5mm; text-transform: uppercase; }
+
+/* The number the cook calls out: as big as the paper allows. */
+.kot-no { text-align: center; font-size: 21mm; font-weight: 900; line-height: 1; margin: 2.5mm 0 2mm; letter-spacing: -0.5mm; }
+
+.kot-type { display: flex; justify-content: space-between; align-items: center; background: #000; color: #fff; padding: 2mm 3mm; font-size: 6mm; font-weight: 800; letter-spacing: 0.6mm; }
+.kot-type span:last-child { font-size: 4.6mm; letter-spacing: 0; font-weight: 700; }
+
+.kot-place { text-align: center; font-size: 10mm; font-weight: 900; padding: 2.4mm 0 2mm; border-bottom: 0.8mm solid #000; }
+
+.kot-meta { display: flex; flex-direction: column; gap: 0.6mm; padding: 2mm 0; font-size: 3.7mm; font-weight: 600; border-bottom: 0.4mm dashed #000; }
+
+.kot-box { margin-top: 2.5mm; border: 0.9mm solid #000; padding: 2mm; font-size: 4.6mm; font-weight: 700; }
+.kot-box p { margin-top: 1mm; overflow-wrap: anywhere; }
+.kot-tag { display: inline-block; background: #000; color: #fff; padding: 0.6mm 1.6mm; font-size: 3.3mm; font-weight: 800; letter-spacing: 0.4mm; }
+.kot-box-note { font-size: 5mm; font-weight: 800; }
+
+.kot-items { list-style: none; margin: 0; padding: 0; }
+.kot-items li { display: grid; grid-template-columns: 13mm 1fr; gap: 3mm; align-items: start; padding: 2.8mm 0; border-bottom: 0.4mm dashed #000; break-inside: avoid; }
+
+/* Quantity box. Two or more is solid black so a "3 ×" is never read as a "1". */
+.kot-qty { display: block; text-align: center; border: 0.8mm solid #000; border-radius: 1.6mm; font-size: 8.5mm; font-weight: 900; line-height: 1; padding: 1.4mm 0; }
+.kot-qty-many { background: #000; color: #fff; }
+
+.kot-what { display: flex; flex-direction: column; gap: 0.8mm; min-width: 0; }
+.kot-name { font-size: 5.4mm; font-weight: 800; line-height: 1.15; overflow-wrap: anywhere; }
+.kot-variant { font-size: 4.2mm; font-weight: 800; text-transform: uppercase; letter-spacing: 0.3mm; }
+.kot-addon { font-size: 4.2mm; font-weight: 600; padding-left: 2mm; }
+.kot-itemnote { margin-top: 0.6mm; border: 0.6mm solid #000; padding: 0.8mm 1.6mm; font-size: 4.2mm; font-weight: 800; overflow-wrap: anywhere; }
+
+.kot-total { display: flex; justify-content: space-between; align-items: baseline; margin-top: 3mm; padding: 2mm 0 0; border-top: 1mm solid #000; font-size: 5mm; font-weight: 900; letter-spacing: 0.4mm; }
+.kot-total span:last-child { font-size: 8mm; }
+.kot-pay { margin-top: 2.5mm; border: 0.7mm solid #000; padding: 1.8mm; text-align: center; font-size: 4.6mm; font-weight: 800; letter-spacing: 0.3mm; }
+.kot-pay b { display: block; margin-top: 0.8mm; font-size: 9mm; font-weight: 900; letter-spacing: 0; }
+
+/* Cut here. */
+.kot-foot { margin-top: 6mm; padding-top: 2.4mm; border-top: 0.5mm dashed #000; text-align: center; font-size: 3.2mm; font-weight: 600; }

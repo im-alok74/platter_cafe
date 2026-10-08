@@ -15,6 +15,8 @@ const itemSchema = z.object({
   category_id: z.uuid("Choose a category."),
   name: z.string().trim().min(1, "Name is required.").max(120),
   description: z.string().trim().max(500).transform((v) => v || null),
+  ingredients: z.string().trim().max(400, "Ingredients can be up to 400 characters.").transform((v) => v || null),
+  method: z.string().trim().max(1200, "How it is made can be up to 1,200 characters.").transform((v) => v || null),
   price: z.coerce.number("Enter a price.").min(0).max(100000),
   is_veg: z.boolean(),
   delivery_available: z.boolean(),
@@ -42,6 +44,8 @@ export async function saveItem(_: FormState, form: FormData): Promise<FormState>
     category_id: text(form, "category_id"),
     name: text(form, "name"),
     description: text(form, "description"),
+    ingredients: text(form, "ingredients"),
+    method: text(form, "method"),
     price: text(form, "price"),
     is_veg: form.get("is_veg") === "on",
     delivery_available: form.get("delivery_available") === "on",
@@ -65,7 +69,7 @@ export async function saveItem(_: FormState, form: FormData): Promise<FormState>
     if (error) return { error: "Could not save the item." };
     itemId = data.id;
   }
-  // Sizes and add-ons are replaced as one set in one transaction (migration 0022).
+  // Sizes and add-ons are replaced as one set in one transaction (migration 0023).
   const { error: optionsError } = await db.rpc("save_item_options", { p_item: itemId!, p_variants: vs, p_addons: addons });
   if (optionsError) return { error: "Saved the item, but not its sizes and options. Please try again." };
   published();

@@ -12,6 +12,8 @@ export type ItemData = {
   category_id: string;
   name: string;
   description: string;
+  ingredients: string;
+  method: string;
   price: number | "";
   is_veg: boolean;
   delivery_available: boolean;
@@ -33,6 +35,29 @@ export function ItemForm({ item, categories, addons }: { item: ItemData; categor
 
   return (
     <div className="space-y-5">
+      {item.id ? (
+          <section className={`${card} space-y-3`}>
+            <h2 className="font-medium">Photo</h2>
+            <p className="text-sm text-muted">Saves as soon as you choose it. The other details below need Save changes.</p>
+            <ImageUploader
+              kind="menu"
+              aspect={4 / 3}
+              current={item.image}
+              onUploaded={async (u) => {
+                const res = await setItemImage(item.id!, u);
+                if (res.ok) router.refresh();
+                return res;
+              }}
+              onRemove={async () => {
+                await removeItemImage(item.id!);
+                router.refresh();
+              }}
+            />
+          </section>
+      ) : (
+        <p className="rounded-2xl border border-dashed border-border p-4 text-sm text-muted">Add the dish first, then you can add its photo here.</p>
+      )}
+
       {/* Submitting through a transition (not form action) so React does not reset the fields after an error. */}
       <form onSubmit={(e) => { e.preventDefault(); const fd = new FormData(e.currentTarget); startTransition(() => action(fd)); }} className="space-y-5">
         {item.id && <input type="hidden" name="id" value={item.id} />}
@@ -41,6 +66,8 @@ export function ItemForm({ item, categories, addons }: { item: ItemData; categor
         <section className={`${card} space-y-4`}>
           <label className={label}>Name<input name="name" required defaultValue={item.name} className={`${input} mt-1`} /></label>
           <label className={label}>Description (optional)<textarea name="description" rows={2} maxLength={500} defaultValue={item.description} className={`${input} mt-1 py-2`} /></label>
+          <label className={label}>What is in it (optional)<textarea name="ingredients" rows={2} maxLength={400} placeholder="Flattened rice, onion, peanuts, curry leaves, lemon" defaultValue={item.ingredients} className={`${input} mt-1 py-2`} /></label>
+          <label className={label}>How it is made (optional)<textarea name="method" rows={4} maxLength={1200} placeholder="Shown on the dish page. Leave empty to show nothing." defaultValue={item.method} className={`${input} mt-1 py-2`} /></label>
           <div className="grid grid-cols-2 gap-3">
             <label className={label}>Price (₹)<input name="price" type="number" inputMode="decimal" min={0} step="0.01" required defaultValue={item.price} className={`${input} mt-1`} /></label>
             <label className={label}>Category
@@ -110,23 +137,6 @@ export function ItemForm({ item, categories, addons }: { item: ItemData; categor
 
       {item.id ? (
         <>
-          <section className={`${card} space-y-3`}>
-            <h2 className="font-medium">Photo</h2>
-            <ImageUploader
-              kind="menu"
-              aspect={4 / 3}
-              current={item.image}
-              onUploaded={async (u) => {
-                const res = await setItemImage(item.id!, u);
-                if (res.ok) router.refresh();
-                return res;
-              }}
-              onRemove={async () => {
-                await removeItemImage(item.id!);
-                router.refresh();
-              }}
-            />
-          </section>
           {delError && <p role="alert" className="text-sm text-nonveg">{delError}</p>}
           <button
             type="button"

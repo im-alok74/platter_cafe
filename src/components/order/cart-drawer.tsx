@@ -1,4 +1,5 @@
 "use client";
+import { DishPhoto } from "@/components/dish-photo";
 import { AnimatePresence, m } from "motion/react";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
@@ -148,7 +149,10 @@ export function CartDrawer({ code, tableLabel, onNotAtTable, gstPercent, whatsap
                 {lines.map((l) => (
                   <m.li key={l.key} layout="position" initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }} transition={spring} className="overflow-hidden">
                     <div className="flex items-center gap-3 py-3">
-                      <span aria-hidden className={`h-3 w-3 shrink-0 rounded-full ${l.isVeg ? "bg-veg" : "bg-nonveg"}`} />
+                      <span className="relative h-16 w-16 shrink-0 overflow-hidden rounded-xl bg-border">
+                        <DishPhoto name={l.name} image={l.image ? { url: l.image } : null} sizes="64px" label={false} />
+                        <span aria-hidden className={`absolute left-1 top-1 h-2.5 w-2.5 rounded-full ring-2 ring-white/80 ${l.isVeg ? "bg-veg" : "bg-nonveg"}`} />
+                      </span>
                       <div className="min-w-0 flex-1">
                         <p className="font-medium leading-snug">{l.name}</p>
                         {(l.variantName || l.addonNames.length > 0) && <p className="text-xs text-muted">{[l.variantName, ...l.addonNames].filter(Boolean).join(" · ")}</p>}

@@ -48,3 +48,12 @@ dev.log
 /.claude/
 /.gstack/
 dev.log
+
+# loose photos dropped in the project folder; real dish photos live in Cloudinary
+/*.jpeg
+/*.jpg
+/*.png
+/*.webp
+
+# demo screenshots are large (about 20 MB); the scripts, SQL and notes in /demo are kept
+/demo/screenshots/

@@ -6,7 +6,7 @@ import { getSettings, templateOf } from "@/lib/data/site";
 
 async function Cart() {
   const s = await getSettings();
-  return <CartHost gstPercent={s.tax.gst_percent} whatsapp={s.contact.whatsapp} delivery={s.delivery} deliveryEnabled={s.flags.delivery} />;
+  return <CartHost gstPercent={s.tax.gst_percent} whatsapp={s.contact.whatsapp} delivery={s.delivery} deliveryEnabled={s.flags.delivery} hours={s.hours} enforceHours={s.ops?.enforce_hours !== false} />;
 }
 
 /** Marks the page with the chosen look so CSS and components can switch. `contents` keeps layout untouched. */

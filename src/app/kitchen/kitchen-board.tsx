@@ -2,7 +2,8 @@
 import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 import { setSoldOut } from "./actions";
 import { Wordmark } from "@/components/wordmark";
-import { formatPrice } from "@/lib/format";
+import { Kot } from "./kot";
+import { formatMoney } from "@/lib/format";
 import { orderTypeLabel, type OrderStatus } from "@/lib/order";
 import { createClient } from "@/lib/supabase/browser";
 import { useFocusTrap } from "@/lib/use-focus-trap";
@@ -25,23 +26,6 @@ const BACK: Partial<Record<OrderStatus, OrderStatus>> = { preparing: "received",
 const placeLabel = (o: KOrder) => o.bench?.label ?? (o.table_hint ? `Table ${o.table_hint}` : orderTypeLabel[o.order_type]);
 const minutesAgo = (iso: string, now: number) => Math.max(0, Math.floor((now - new Date(iso).getTime()) / 60000));
 
-function Kot({ o }: { o: KOrder }) {
-  return (
-    <div className="p-4 font-mono text-black">
-      <p className="text-xl font-bold">KOT · #{o.order_no}</p>
-      <p>{placeLabel(o)} · {orderTypeLabel[o.order_type]}</p>
-      {o.delivery_address && <p>Deliver to: {o.delivery_address} ({o.delivery_km} km)</p>}
-      {o.guest_name && <p>{o.guest_name} {o.guest_phone}</p>}
-      <p>{new Date(o.placed_at).toLocaleString("en-IN", { timeZone: "Asia/Kolkata" })}</p>
-      <hr className="my-2 border-black" />
-      {o.items.map((i) => (
-        <p key={i.id} className="text-lg">{i.qty} × {i.name}{i.variant_name ? ` (${i.variant_name})` : ""}{i.addons.length ? ` + ${i.addons.map((a) => a.name).join(", ")}` : ""}{i.note ? ` — ${i.note}` : ""}</p>
-      ))}
-      {o.note && <p className="mt-2 font-bold">Note: {o.note}</p>}
-    </div>
-  );
-}
-
 export function KitchenBoard({ actions, dishes }: { actions: ReactNode; dishes: { id: string; name: string; soldOut: boolean }[] }) {
   const sb = useRef(createClient());
   const [orders, setOrders] = useState<KOrder[] | null>(null);
@@ -52,7 +36,7 @@ export function KitchenBoard({ actions, dishes }: { actions: ReactNode; dishes: 
   const [now, setNow] = useState(() => Date.now());
   const [soundOn, setSoundOn] = useState(false);
   const [fresh, setFresh] = useState<Set<string>>(new Set());
-  const [printing, setPrinting] = useState<KOrder | null>(null);
+  const [printing, setPrinting] = useState<{ o: KOrder; at: number } | null>(null);
   const [filter, setFilter] = useState<"all" | KOrder["order_type"]>("all");
   const [soldPanel, setSoldPanel] = useState(false);
   const [dishQ, setDishQ] = useState("");
@@ -263,7 +247,7 @@ export function KitchenBoard({ actions, dishes }: { actions: ReactNode; dishes: 
             ))}
           </ul>
           {o.note && <p className="mt-3 rounded-lg bg-brand/15 p-2 text-lg font-medium text-brand">Note: {o.note}</p>}
-          <p className="mt-3 text-sm text-muted">{formatPrice(o.total)} · {o.payment_status === "paid" ? "Paid" : o.payment_method === "counter" ? "Pays at counter" : "Online, pending"}</p>
+          <p className="mt-3 text-sm text-muted">{formatMoney(o.total)} · {o.payment_status === "paid" ? "Paid" : o.payment_method === "counter" ? "Pays at counter" : "Online, pending"}</p>
           <div className="mt-3 grid gap-2">
             {next && <button disabled={pending} onClick={() => rpc("set_order_status", { p_id: o.id, p_status: next.to })} className={`${btn} ${st.btn} disabled:opacity-60`}>{pending ? "Saving…" : next.label}</button>}
             {o.payment_method === "counter" && o.payment_status === "unpaid" && (
@@ -271,7 +255,7 @@ export function KitchenBoard({ actions, dishes }: { actions: ReactNode; dishes: 
             )}
             <div className="flex gap-2 text-base">
               {BACK[o.status] && o.status !== "served" && <button disabled={pending} onClick={() => rpc("set_order_status", { p_id: o.id, p_status: BACK[o.status]! })} className="min-h-12 flex-1 rounded-xl border border-border disabled:opacity-60">Back</button>}
-              <button onClick={() => setPrinting(o)} className="min-h-12 flex-1 rounded-xl border border-border">Print KOT</button>
+              <button onClick={() => setPrinting({ o, at: Date.now() })} className="min-h-12 flex-1 rounded-xl border border-border">Print KOT</button>
               {o.status !== "served" && o.payment_status !== "paid" && (
                 <button disabled={pending} onClick={() => confirm(`Cancel order #${o.order_no}?`) && rpc("set_order_status", { p_id: o.id, p_status: "cancelled" })} className="min-h-12 flex-1 rounded-xl border border-nonveg text-nonveg disabled:opacity-60">Cancel</button>
               )}
@@ -428,7 +412,7 @@ export function KitchenBoard({ actions, dishes }: { actions: ReactNode; dishes: 
           </div>
         )}
       </div>
-      {printing && <div className="hidden print:block"><Kot o={printing} /></div>}
+      {printing && <div className="hidden print:block"><Kot o={printing.o} printedAt={printing.at} /></div>}
     </>
   );
 }
